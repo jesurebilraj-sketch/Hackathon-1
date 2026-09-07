@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "../Codings"
+		},
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"java.debug.settings.onBuildFailureProceed": true
+	}
+}
