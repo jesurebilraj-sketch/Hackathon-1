@@ -62,8 +62,12 @@ def get_or_create_default_teacher(db: Session) -> User:
 
 
 @router.get("/", summary="List all courses")
-def list_courses(db: Session = Depends(get_db)):
-    courses = db.query(Course).all()
+def list_courses(category: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(Course)
+    if category:
+        query = query.filter(Course.category == category)
+    courses = query.all()
+    
     return {
         "count": len(courses),
         "courses": [
@@ -71,6 +75,8 @@ def list_courses(db: Session = Depends(get_db)):
                 "id": c.id,
                 "title": c.title,
                 "description": c.description,
+                "category": c.category,
+                "imageUrl": c.image_url,
                 "teacher_id": c.teacher_id,
                 "created_at": c.created_at.isoformat() if c.created_at else None,
             }

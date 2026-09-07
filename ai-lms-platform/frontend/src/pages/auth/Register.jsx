@@ -1,14 +1,32 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { BookOpen, Eye, EyeOff } from 'lucide-react';
+import { BookOpen, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 const Register = () => {
   const [role, setRole] = useState('student');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  const validatePassword = (password) => {
+    // Password security check: 
+    // Minimum 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special character
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return regex.test(password);
+  };
 
   const handleRegister = (e) => {
     e.preventDefault();
+    setError('');
+
+    const password = e.target.password.value;
+
+    // Password Security Check
+    if (!validatePassword(password)) {
+      setError('Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.');
+      return;
+    }
+
     const name = e.target.name.value;
     localStorage.setItem('userName', name);
     if (role === 'teacher') {
@@ -29,6 +47,14 @@ const Register = () => {
             Create an Account
           </h2>
         </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start gap-3 text-sm">
+            <AlertCircle size={18} className="mt-0.5 shrink-0" />
+            <p>{error}</p>
+          </div>
+        )}
+
         <form className="mt-8 space-y-6" onSubmit={handleRegister}>
           <div className="space-y-4 rounded-md shadow-sm">
             <div>

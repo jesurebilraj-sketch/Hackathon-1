@@ -177,18 +177,7 @@ const StudentCourses = () => {
                 </span>
                 <h4 className="font-bold text-gray-900 mb-4 flex-1 cursor-pointer hover:text-blue-600 transition-colors">{course.title}</h4>
                 <button 
-                  onClick={async () => {
-                    try {
-                      const { api } = await import('../../services/api');
-                      await api.enrollStudent(1, course.id);
-                      alert("Successfully registered for course!");
-                      setIsNewUser(false);
-                    } catch (err) {
-                      console.warn("Failed to register via API. Faking it for demo.", err);
-                      alert("Successfully registered for course! (Mock)");
-                      setIsNewUser(false);
-                    }
-                  }}
+                  onClick={() => navigate(`/student/courses/${course.id}/teachers`)}
                   className="w-full py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:border-blue-300 transition-colors cursor-pointer"
                 >
                   Register Course

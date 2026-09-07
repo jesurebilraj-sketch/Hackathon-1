@@ -11,8 +11,9 @@ const handleResponse = async (response) => {
 
 export const api = {
   // Courses API
-  getAllCourses: async () => {
-    const response = await fetch(`${API_BASE_URL}/courses/`);
+  getAllCourses: async (category = null) => {
+    const url = category ? `${API_BASE_URL}/courses/?category=${encodeURIComponent(category)}` : `${API_BASE_URL}/courses/`;
+    const response = await fetch(url);
     return handleResponse(response);
   },
   

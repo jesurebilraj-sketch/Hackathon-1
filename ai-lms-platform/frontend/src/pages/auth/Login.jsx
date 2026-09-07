@@ -1,17 +1,54 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { BookOpen, Eye, EyeOff } from 'lucide-react';
+import { BookOpen, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 const Login = () => {
   const [role, setRole] = useState('student');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  // Valid teacher accounts for the demo
+  const validTeacherEmails = [
+    'teacher@lms.com',
+    'alan.turing@lms.edu',
+    'grace.hopper@lms.edu',
+    'ada.lovelace@lms.edu'
+  ];
+
+  const validatePassword = (password) => {
+    // Password security check: 
+    // Minimum 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special character
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return regex.test(password);
+  };
 
   const handleLogin = (e) => {
     e.preventDefault();
-    const email = e.target.email.value;
-    const name = email.split('@')[0];
-    const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1);
+    setError(''); // clear previous errors
+    
+    const email = e.target.email.value.toLowerCase().trim();
+    const password = e.target.password.value;
+
+    // 1. Password Security Check
+    if (!validatePassword(password)) {
+      setError('Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (e.g., SecurePass123!).');
+      return;
+    }
+
+    // 2. Role validation check
+    if (role === 'teacher') {
+      if (!validTeacherEmails.includes(email)) {
+        setError('Invalid Teacher Email. Access denied. Please use a registered teacher account (e.g., alan.turing@lms.edu).');
+        return;
+      }
+    }
+
+    // 3. Success -> Proceed to login
+    const namePart = email.split('@')[0];
+    const cleanName = namePart.replace(/[.-]/g, ' '); // alan.turing -> alan turing
+    const capitalizedName = cleanName.split(' ').map(n => n.charAt(0).toUpperCase() + n.slice(1)).join(' ');
+    
     localStorage.setItem('userName', capitalizedName);
     
     if (role === 'teacher') {
@@ -32,20 +69,42 @@ const Login = () => {
             Sign in to AI-LMS
           </h2>
         </div>
+        
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start gap-3 text-sm">
+            <AlertCircle size={18} className="mt-0.5 shrink-0" />
+            <p>{error}</p>
+          </div>
+        )}
+
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           <div className="space-y-4 rounded-md shadow-sm">
             <div>
               <label className="block text-sm font-medium text-gray-500 mb-1">
                 {role === 'student' ? 'Student Email:' : 'Teacher Email:'}
               </label>
-              <input name="email" type="email" required className="relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Email address" defaultValue="demo@example.com" />
+              <input 
+                name="email" 
+                type="email" 
+                required 
+                className="relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+                placeholder="email@example.com" 
+                defaultValue="alan.turing@lms.edu" 
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-500 mb-1">
                 Password:
               </label>
               <div className="relative">
-                <input name="password" type={showPassword ? "text" : "password"} required className="relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-10" placeholder="Password" defaultValue="password" />
+                <input 
+                  name="password" 
+                  type={showPassword ? "text" : "password"} 
+                  required 
+                  className="relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-10" 
+                  placeholder="Password" 
+                  defaultValue="SecurePass123!" 
+                />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}

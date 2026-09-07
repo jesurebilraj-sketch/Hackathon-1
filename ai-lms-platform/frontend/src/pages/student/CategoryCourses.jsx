@@ -7,37 +7,82 @@ const CategoryCourses = () => {
   const navigate = useNavigate();
   const decodedCategory = decodeURIComponent(category);
 
-  // Dummy data based on the category
-  const courses = [
-    {
-      id: 1,
-      title: `Introduction to ${decodedCategory}`,
-      instructor: 'Dr. Alan Turing',
-      modules: 12,
-      imageUrl: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=500&q=80'
-    },
-    {
-      id: 2,
-      title: `Advanced ${decodedCategory} Patterns`,
-      instructor: 'Prof. Grace Hopper',
-      modules: 18,
-      imageUrl: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=500&q=80'
-    },
-    {
-      id: 3,
-      title: `${decodedCategory} for Beginners`,
-      instructor: 'AI Generated',
-      modules: 8,
-      imageUrl: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=500&q=80'
-    },
-    {
-      id: 4,
-      title: `Mastering ${decodedCategory}`,
-      instructor: 'Ada Lovelace',
-      modules: 24,
-      imageUrl: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=500&q=80'
-    }
-  ];
+  const [courses, setCourses] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  // Fallback if DB is empty
+  const getMockCourses = (cat) => {
+    // Generate a consistent pseudo-random number based on the category string length
+    // to pick different Unsplash images so categories look distinct.
+    const seed = cat.length;
+    const images = [
+      'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=500&q=80',
+      'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=500&q=80',
+      'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=500&q=80',
+      'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=500&q=80',
+      'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=500&q=80',
+      'https://images.unsplash.com/photo-1461360370896-922624d12aa1?w=500&q=80',
+      'https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?w=500&q=80',
+      'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=500&q=80'
+    ];
+
+    return [
+      {
+        id: `mock-1`,
+        title: `Introduction to ${cat}`,
+        instructor: 'Dr. Alan Turing',
+        modules: 12,
+        imageUrl: images[(seed) % images.length]
+      },
+      {
+        id: `mock-2`,
+        title: `Advanced ${cat} Patterns`,
+        instructor: 'Prof. Grace Hopper',
+        modules: 18,
+        imageUrl: images[(seed + 1) % images.length]
+      },
+      {
+        id: `mock-3`,
+        title: `${cat} for Beginners`,
+        instructor: 'AI Generated',
+        modules: 8,
+        imageUrl: images[(seed + 2) % images.length]
+      },
+      {
+        id: `mock-4`,
+        title: `Mastering ${cat}`,
+        instructor: 'Ada Lovelace',
+        modules: 24,
+        imageUrl: images[(seed + 3) % images.length]
+      }
+    ];
+  };
+
+  React.useEffect(() => {
+    const fetchCategoryCourses = async () => {
+      try {
+        const { api } = await import('../../services/api');
+        const data = await api.getAllCourses(decodedCategory);
+        if (data.courses && data.courses.length > 0) {
+          setCourses(data.courses.map(c => ({
+            id: c.id,
+            title: c.title,
+            instructor: 'Expert Instructor',
+            modules: 10, // Mock module count since we aren't joining modules yet
+            imageUrl: c.imageUrl || 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=500&q=80'
+          })));
+        } else {
+          setCourses(getMockCourses(decodedCategory));
+        }
+      } catch (err) {
+        console.warn("Backend unavailable, using mock data", err);
+        setCourses(getMockCourses(decodedCategory));
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCategoryCourses();
+  }, [decodedCategory]);
 
   return (
     <div className="max-w-6xl mx-auto pb-12">
@@ -67,7 +112,10 @@ const CategoryCourses = () => {
                 <BookOpen size={14} />
                 {course.modules} Modules
               </p>
-              <button className="w-full py-2 bg-blue-50 border border-transparent rounded-lg text-sm font-medium text-blue-700 hover:bg-blue-600 hover:text-white transition-colors cursor-pointer">
+              <button 
+                onClick={() => navigate(`/student/courses/${course.id}/teachers`)}
+                className="w-full py-2 bg-blue-50 border border-transparent rounded-lg text-sm font-medium text-blue-700 hover:bg-blue-600 hover:text-white transition-colors cursor-pointer"
+              >
                 Register Course
               </button>
             </div>

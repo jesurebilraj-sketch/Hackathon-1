@@ -26,6 +26,8 @@ class Course(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
+    category = Column(String(100), default="General", nullable=False)
+    image_url = Column(String(512), nullable=True)
     source_file = Column(String(512), nullable=True)
     teacher_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
