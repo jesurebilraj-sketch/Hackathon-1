@@ -16,11 +16,11 @@ const Navbar = ({ role }) => {
       </div>
       
       <div className="flex items-center gap-4">
-        <button className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100">
+        <button className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 cursor-pointer">
           <Bell size={20} />
         </button>
         <div className="flex items-center gap-2 border-l pl-4 border-gray-200">
-          <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
+          <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-200 transition-colors">
             <User size={16} />
           </div>
           <span className="text-sm font-medium text-gray-700 hidden sm:block">
@@ -28,7 +28,7 @@ const Navbar = ({ role }) => {
           </span>
           <button 
             onClick={handleLogout}
-            className="ml-2 text-gray-500 hover:text-red-600 p-2 rounded-full hover:bg-red-50"
+            className="ml-2 text-gray-500 hover:text-red-600 p-2 rounded-full hover:bg-red-50 cursor-pointer"
             title="Log out"
           >
             <LogOut size={18} />
