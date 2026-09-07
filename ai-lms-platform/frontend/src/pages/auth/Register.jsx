@@ -20,6 +20,7 @@ const Register = () => {
     setError('');
 
     const password = e.target.password.value;
+    const email = e.target.email.value.toLowerCase().trim();
 
     // Password Security Check
     if (!validatePassword(password)) {
@@ -27,11 +28,38 @@ const Register = () => {
       return;
     }
 
+    // Role validation check
+    const isLmsEdu = email.endsWith('@lms.edu');
+    
+    if (role === 'teacher') {
+      if (!isLmsEdu) {
+        setError('Teacher emails must end with @lms.edu. Please use a valid institutional email.');
+        return;
+      }
+    } else if (role === 'student') {
+      if (isLmsEdu) {
+        setError('Emails ending in @lms.edu are reserved for Teachers. Please select the Teacher registration portal.');
+        return;
+      }
+    }
+
     const name = e.target.name.value;
     localStorage.setItem('userName', name);
+    localStorage.setItem('userEmail', email);
+
     if (role === 'teacher') {
+      // Set a generic teacher ID for demo
+      localStorage.setItem('teacherId', '1');
       navigate('/teacher/dashboard');
     } else {
+      // Generate a stable student ID based on email string
+      let hash = 0;
+      for (let i = 0; i < email.length; i++) {
+          hash = email.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const studentId = Math.abs(hash) % 10000;
+      localStorage.setItem('studentId', studentId.toString());
+
       navigate('/student/dashboard');
     }
   };

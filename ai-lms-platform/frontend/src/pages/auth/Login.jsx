@@ -37,14 +37,20 @@ const Login = () => {
     }
 
     // 2. Role validation check
+    const isLmsEdu = email.endsWith('@lms.edu');
+    
     if (role === 'teacher') {
+      if (!isLmsEdu) {
+        setError('Teacher emails must end with @lms.edu. Access denied.');
+        return;
+      }
       if (!validTeacherEmails.includes(email)) {
         setError('Invalid Teacher Email. Access denied. Please use a registered teacher account (e.g., alan.turing@lms.edu).');
         return;
       }
     } else if (role === 'student') {
-      if (validTeacherEmails.includes(email)) {
-        setError('This email is registered as a Teacher. Please select the Teacher login portal.');
+      if (isLmsEdu) {
+        setError('Emails ending in @lms.edu are reserved for Teachers. Please select the Teacher login portal.');
         return;
       }
     }
