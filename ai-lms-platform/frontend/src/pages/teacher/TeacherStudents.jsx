@@ -30,12 +30,42 @@ const TeacherStudents = () => {
       } finally {
         // Fallback check: If the API failed or returned empty, we could build a list from mockEnrollments.
         // We now save to `teacherStudents_${teacherId}` in local storage during CourseTeachers.jsx fallback.
-        const mockTeacherStudents = JSON.parse(localStorage.getItem(`teacherStudents_${teacherId}`) || '[]');
+        let mockTeacherStudents = JSON.parse(localStorage.getItem(`teacherStudents_${teacherId}`) || '[]');
+        
+        // Robust fallback: ALSO scan all mockEnrollments_ keys for past enrollments
+        const teacherNames = { 1: 'Dr. Alan Turing', 2: 'Prof. Grace Hopper', 3: 'Dr. Ada Lovelace' };
+        const myName = teacherNames[teacherId];
+
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('mockEnrollments_')) {
+            const email = key.replace('mockEnrollments_', '');
+            try {
+              const enrs = JSON.parse(localStorage.getItem(key) || '[]');
+              for (const enr of enrs) {
+                if (enr.course && enr.course.teacher === myName) {
+                  // Found an enrollment matching this teacher!
+                  if (!mockTeacherStudents.find(s => s.email === email && s.course === enr.course.title)) {
+                    mockTeacherStudents.push({
+                      id: email,
+                      name: email.split('@')[0],
+                      email: email,
+                      course: enr.course.title,
+                      progress: 0,
+                      lastActive: 'Just now',
+                      modules: []
+                    });
+                  }
+                }
+              }
+            } catch (e) {}
+          }
+        }
         
         // Merge API students and Mock students (avoiding duplicates)
         const combined = [...apiStudents];
         for (const mock of mockTeacherStudents) {
-          if (!combined.find(s => s.id === mock.id && s.course === mock.course)) {
+          if (!combined.find(s => s.email === mock.email && s.course === mock.course)) {
             combined.push(mock);
           }
         }
