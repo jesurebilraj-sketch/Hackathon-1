@@ -11,34 +11,64 @@ const TeacherStudents = () => {
   
   const [viewingStudent, setViewingStudent] = useState(null);
 
-  const [students, setStudents] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  React.useEffect(() => {
-    const fetchStudents = async () => {
-      setLoading(true);
-      const teacherId = parseInt(localStorage.getItem('teacherId') || '1');
-      let apiStudents = [];
-      try {
-        const { api } = await import('../../services/api');
-        const data = await api.getTeacherStudents(teacherId);
-        if (data && data.students) {
-          apiStudents = data.students;
-        }
-      } catch (error) {
-        console.warn("Failed to fetch API students. Using local mock state.", error);
-      } finally {
-        // Fallback check: If the API failed or returned empty, we could build a list from mockEnrollments,
-        // but since we only want ACTUAL students who enroll in the portal, we should prioritize what we have.
-        // Wait, local storage mockEnrollments is isolated per user.
-        // The only way to see true enrollments across browsers is via the backend API.
-        // If the backend fails, we have no global list.
-        setStudents(apiStudents);
-        setLoading(false);
-      }
-    };
-    fetchStudents();
-  }, []);
+  // Mock Data
+  const students = [
+    {
+      id: 1,
+      name: 'Emma Watson',
+      course: 'Python Programming Masterclass',
+      progress: 78,
+      lastActive: '2 hours ago',
+      email: 'emma@example.com',
+      modules: [
+        { name: 'Introduction to Python', score: 100, grade: 'A' },
+        { name: 'Data Types & Variables', score: 95, grade: 'A' },
+        { name: 'Control Flow', score: 88, grade: 'B+' },
+        { name: 'Functions & Modules', score: 72, grade: 'C' },
+        { name: 'Object Oriented Programming', score: 0, grade: 'Pending' },
+      ]
+    },
+    {
+      id: 2,
+      name: 'Liam Johnson',
+      course: 'Introduction to Data Structures',
+      progress: 34,
+      lastActive: '1 day ago',
+      email: 'liam@example.com',
+      modules: [
+        { name: 'Arrays & Strings', score: 85, grade: 'B' },
+        { name: 'Linked Lists', score: 60, grade: 'D' },
+        { name: 'Stacks & Queues', score: 0, grade: 'Pending' },
+      ]
+    },
+    {
+      id: 3,
+      name: 'Olivia Smith',
+      course: 'Python Programming Masterclass',
+      progress: 100,
+      lastActive: 'Just now',
+      email: 'olivia@example.com',
+      modules: [
+        { name: 'Introduction to Python', score: 100, grade: 'A' },
+        { name: 'Data Types & Variables', score: 100, grade: 'A' },
+        { name: 'Control Flow', score: 98, grade: 'A' },
+        { name: 'Functions & Modules', score: 95, grade: 'A' },
+        { name: 'Object Oriented Programming', score: 100, grade: 'A' },
+      ]
+    },
+    {
+      id: 4,
+      name: 'Noah Williams',
+      course: 'Machine Learning Basics',
+      progress: 0,
+      lastActive: '2 weeks ago',
+      email: 'noah@example.com',
+      modules: [
+        { name: 'Math Fundamentals', score: 0, grade: 'Pending' },
+        { name: 'Linear Regression', score: 0, grade: 'Pending' },
+      ]
+    }
+  ];
 
   const uniqueCourses = ['All', ...new Set(students.map(s => s.course))];
 

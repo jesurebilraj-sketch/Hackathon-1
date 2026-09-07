@@ -36,15 +36,14 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/courses/teacher/${teacherId}`);
     return handleResponse(response);
   },
-  
-  getTeacherStudents: async (teacherId) => {
-    const response = await fetch(`${API_BASE_URL}/courses/teacher/${teacherId}/students`);
-    return handleResponse(response);
-  },
 
   // Student specific
-  enrollStudent: async (studentId, courseId) => {
-    const response = await fetch(`${API_BASE_URL}/courses/student/${studentId}/enroll/${courseId}`, {
+  enrollStudent: async (studentId, courseId, teacherId = null) => {
+    let url = `${API_BASE_URL}/courses/student/${studentId}/enroll/${courseId}`;
+    if (teacherId) {
+      url += `?teacher_id=${teacherId}`;
+    }
+    const response = await fetch(url, {
       method: 'POST',
     });
     return handleResponse(response);

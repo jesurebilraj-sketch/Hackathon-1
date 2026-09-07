@@ -200,31 +200,8 @@ def get_teacher_courses(teacher_id: int, db: Session = Depends(get_db)):
         ]
     }
 
-@router.get("/teacher/{teacher_id}/students", summary="Get all students enrolled in a teacher's courses")
-def get_teacher_students(teacher_id: int, db: Session = Depends(get_db)):
-    courses = db.query(Course).filter(Course.teacher_id == teacher_id).all()
-    course_ids = [c.id for c in courses]
-    
-    enrollments = db.query(Enrollment).filter(Enrollment.course_id.in_(course_ids)).all()
-    
-    results = []
-    for enr in enrollments:
-        student = enr.student
-        course = enr.course
-        results.append({
-            "id": student.id,
-            "name": student.name,
-            "email": student.email,
-            "course": course.title,
-            "progress": 0, # Default for demo
-            "lastActive": "Just now",
-            "modules": [] # Default for demo
-        })
-        
-    return {"count": len(results), "students": results}
-
 @router.post("/student/{student_id}/enroll/{course_id}", summary="Enroll a student in a course")
-def enroll_student(student_id: int, course_id: int, db: Session = Depends(get_db)):
+def enroll_student(student_id: int, course_id: int, teacher_id: Optional[int] = None, db: Session = Depends(get_db)):
     # Check if student exists, if not, auto-create for the demo
     student = db.query(User).filter(User.id == student_id, User.role == "student").first()
     if not student:
@@ -233,10 +210,28 @@ def enroll_student(student_id: int, course_id: int, db: Session = Depends(get_db
         db.commit()
         db.refresh(student)
         
-    # Check if course exists
+    # Check if course exists, if not, auto-create a mock course for the demo
     course = db.query(Course).filter(Course.id == course_id).first()
     if not course:
-        raise HTTPException(status_code=404, detail="Course not found")
+        # We need a teacher for the course. Use provided teacher_id or default to 1
+        t_id = teacher_id if teacher_id else 1
+        teacher = db.query(User).filter(User.id == t_id, User.role == "teacher").first()
+        if not teacher:
+            teacher = User(id=t_id, name=f"Demo Teacher {t_id}", email=f"teacher_{t_id}@lms.edu", role="teacher")
+            db.add(teacher)
+            db.commit()
+            db.refresh(teacher)
+
+        course = Course(
+            id=course_id,
+            title=f"Mock Course #{course_id}",
+            description="Auto-generated course for demo purposes.",
+            teacher_id=teacher.id,
+            category="Demo"
+        )
+        db.add(course)
+        db.commit()
+        db.refresh(course)
         
     # Check if already enrolled
     existing = db.query(Enrollment).filter(

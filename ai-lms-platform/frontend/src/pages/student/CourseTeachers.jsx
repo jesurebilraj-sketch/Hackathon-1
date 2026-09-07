@@ -69,7 +69,7 @@ const CourseTeachers = () => {
 
     try {
       // Use the actual API!
-      await api.enrollStudent(studentId, id);
+      await api.enrollStudent(studentId, id, selectedTeacher.id);
       
       // Increment teacher student count
       const newStats = { ...teacherStats, [selectedTeacher.id]: (teacherStats[selectedTeacher.id] || 0) + 1 };
