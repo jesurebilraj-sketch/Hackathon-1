@@ -210,3 +210,40 @@ def test_chunk_page_metadata():
     chunk = chunks[0]
     assert chunk["page_start"] == 3
     assert chunk["page_end"] == 4
+
+
+# 11. Slide Layout Artifact Separation
+def test_slide_layout_artifact_separation():
+    """Verify that short, unpunctuated slide layout items (like numbers or headings) are not merged."""
+    raw_input = (
+        "Dummy line 1\n"
+        "Dummy line 2\n"
+        "Dummy line 3\n"
+        "Our Objectives\n"
+        "What we aim to achieve in this session.\n"
+        "02\n"
+        "03\n"
+        "Raise awareness\n"
+        "Promote open dialogue\n"
+        "Dummy line 4\n"
+        "Dummy line 5\n"
+        "Dummy line 6\n"
+    )
+    cleaned = clean_text(raw_input, page_number=1)
+    # The short, unpunctuated elements should be preserved as separate lines, not merged
+    assert "Our Objectives\nWhat we aim to achieve in this session." in cleaned or "Our Objectives" in cleaned.split("\n")
+    assert "02\n03\nRaise awareness\nPromote open dialogue" in cleaned
+
+# 12. Soft Wrap Preservation
+def test_soft_wrap_preservation():
+    """Verify that normal short sentences ending with punctuation or hyphenated wraps merge properly."""
+    raw_input = (
+        "This is a normal paragraph line that is\n"
+        "wrapped to the next line without any punctuation\n"
+        "but it keeps going and ends here.\n\n"
+        "Another short sentence.\n"
+        "It ends here."
+    )
+    cleaned = clean_text(raw_input, page_number=1)
+    assert "This is a normal paragraph line that is wrapped to the next line without any punctuation but it keeps going and ends here." in cleaned
+    assert "Another short sentence. It ends here." in cleaned

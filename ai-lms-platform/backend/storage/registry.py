@@ -70,8 +70,9 @@ def resolve_source_pdf(identifier: Optional[str]) -> Tuple[Optional[str], Option
     if pdf_direct.exists() and pdf_direct.is_file():
         return clean_id, pdf_direct
 
-    # 4. Check if clean_id matches the original_filename in any .meta.json file
-    for m_file in UPLOAD_DIR.glob("*.meta.json"):
+    # 4. Check if clean_id matches the original_filename in any .meta.json file (most recent first)
+    meta_files = sorted(UPLOAD_DIR.glob("*.meta.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+    for m_file in meta_files:
         try:
             with open(m_file, "r", encoding="utf-8") as f:
                 meta = json.load(f)

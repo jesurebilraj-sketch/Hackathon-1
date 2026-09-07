@@ -14,6 +14,14 @@ from .llm_client import (
     LLMResponseError,
 )
 
+from .lesson_generator import (
+    PracticeQuestion,
+    LessonContent,
+    LessonGenerationError,
+    generate_lesson_content,
+    generate_grounded_fallback_lesson,
+)
+
 __all__ = [
     "LessonStructure",
     "ModuleStructure",
@@ -26,4 +34,9 @@ __all__ = [
     "LLMError",
     "LLMKeyMissingError",
     "LLMResponseError",
+    "PracticeQuestion",
+    "LessonContent",
+    "LessonGenerationError",
+    "generate_lesson_content",
+    "generate_grounded_fallback_lesson",
 ]

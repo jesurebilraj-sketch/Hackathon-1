@@ -66,6 +66,24 @@ def migrate_schema(eng):
                 if "source_pages" not in existing_columns:
                     logger.info("Migrating schema: adding 'source_pages' to 'lessons' table.")
                     conn.execute(text("ALTER TABLE lessons ADD COLUMN source_pages JSON DEFAULT NULL"))
+                if "learning_objectives" not in existing_columns:
+                    logger.info("Migrating schema: adding 'learning_objectives' to 'lessons' table.")
+                    conn.execute(text("ALTER TABLE lessons ADD COLUMN learning_objectives JSON DEFAULT NULL"))
+                if "key_concepts" not in existing_columns:
+                    logger.info("Migrating schema: adding 'key_concepts' to 'lessons' table.")
+                    conn.execute(text("ALTER TABLE lessons ADD COLUMN key_concepts JSON DEFAULT NULL"))
+                if "examples" not in existing_columns:
+                    logger.info("Migrating schema: adding 'examples' to 'lessons' table.")
+                    conn.execute(text("ALTER TABLE lessons ADD COLUMN examples JSON DEFAULT NULL"))
+                if "key_takeaways" not in existing_columns:
+                    logger.info("Migrating schema: adding 'key_takeaways' to 'lessons' table.")
+                    conn.execute(text("ALTER TABLE lessons ADD COLUMN key_takeaways JSON DEFAULT NULL"))
+                if "misconceptions" not in existing_columns:
+                    logger.info("Migrating schema: adding 'misconceptions' to 'lessons' table.")
+                    conn.execute(text("ALTER TABLE lessons ADD COLUMN misconceptions JSON DEFAULT NULL"))
+                if "practice_questions" not in existing_columns:
+                    logger.info("Migrating schema: adding 'practice_questions' to 'lessons' table.")
+                    conn.execute(text("ALTER TABLE lessons ADD COLUMN practice_questions JSON DEFAULT NULL"))
     except Exception as exc:
         logger.warning("Lightweight schema migration check notice: %s", exc)
 

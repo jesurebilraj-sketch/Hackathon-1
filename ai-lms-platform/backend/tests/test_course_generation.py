@@ -383,3 +383,63 @@ def test_create_course_existing_source_file_behavior():
     assert res.status_code == 201
     assert res.json()["source_file"] == filename
 
+
+# 14. Course generation idempotency test
+def test_repeated_course_generation_is_idempotent():
+    """Verify calling POST /api/courses/{course_id}/generate multiple times replaces curriculum and does not duplicate modules or lessons."""
+    pdf_bytes = create_sample_pdf_bytes()
+    filename = "Idempotency_Test_Doc.pdf"
+
+    up_res = client.post(
+        "/api/courses/upload",
+        files={"file": (filename, io.BytesIO(pdf_bytes), "application/pdf")},
+    )
+    assert up_res.status_code == 200
+    doc_id = up_res.json()["document_id"]
+
+    course_res = client.post(
+        "/api/courses/",
+        json={"title": "Idempotent Curriculum Course", "document_id": doc_id},
+    )
+    assert course_res.status_code == 201
+    course_id = course_res.json()["id"]
+
+    # First generation
+    gen1_res = client.post(f"/api/courses/{course_id}/generate")
+    assert gen1_res.status_code == 200
+    gen1_data = gen1_res.json()
+    expected_module_count = len(gen1_data["modules"])
+    expected_lesson_count = sum(len(m["lessons"]) for m in gen1_data["modules"])
+    assert expected_module_count > 0
+    assert expected_lesson_count > 0
+
+    db = SessionLocal()
+    mods_run1 = db.query(Module).filter(Module.course_id == course_id).all()
+    mod_ids_run1 = [m.id for m in mods_run1]
+    lessons_run1 = db.query(Lesson).filter(Lesson.module_id.in_(mod_ids_run1)).all()
+    assert len(mods_run1) == expected_module_count
+    assert len(lessons_run1) == expected_lesson_count
+    db.close()
+
+    # Second generation on the exact same course
+    gen2_res = client.post(f"/api/courses/{course_id}/generate")
+    assert gen2_res.status_code == 200
+    gen2_data = gen2_res.json()
+
+    db = SessionLocal()
+    mods_run2 = db.query(Module).filter(Module.course_id == course_id).all()
+    mod_ids_run2 = [m.id for m in mods_run2]
+    lessons_run2 = db.query(Lesson).filter(Lesson.module_id.in_(mod_ids_run2)).all()
+
+    # Verify no duplicate modules and no accumulated/duplicate lessons
+    assert len(mods_run2) == len(gen2_data["modules"])
+    assert len(lessons_run2) == sum(len(m["lessons"]) for m in gen2_data["modules"])
+
+    # Verify old orphaned lessons do not exist for the course
+    if mod_ids_run1 != mod_ids_run2:
+        orphaned_lessons = db.query(Lesson).filter(Lesson.module_id.in_(mod_ids_run1)).all()
+        assert len(orphaned_lessons) == 0
+
+    db.close()
+
+
