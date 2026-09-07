@@ -14,18 +14,23 @@ For convenience during demonstrations, the following accounts have been register
 
 1. **Dr. Alan Turing** (Theoretical & Intensive)
    - Email: `alan.turing@lms.edu`
+   - Password: `SecurePass123!`
 2. **Prof. Grace Hopper** (Practical & Project-Based)
    - Email: `grace.hopper@lms.edu`
+   - Password: `SecurePass123!`
 3. **Dr. Ada Lovelace** (Paced & Beginner Friendly)
    - Email: `ada.lovelace@lms.edu`
+   - Password: `SecurePass123!`
 4. **General Admin Teacher**
    - Email: `teacher@lms.com`
+   - Password: `SecurePass123!`
 
 ### Student Accounts
 *Note: Student registration is open, so you can use any email to log in as a student, but this is the default pre-filled demo account.*
 
 1. **Demo Student**
    - Email: `student@lms.com`
+   - Password: `SecurePass123!`
 
 ## Quick Start
 
