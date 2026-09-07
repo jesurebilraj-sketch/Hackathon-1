@@ -23,26 +23,20 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual Environment
+# Environment / secrets
 .env
 .env.local
 .env.*.local
+*.env
 
 # Databases
 *.sqlite3
 *.db
+*.sqlite
 
 # Storage / Uploads
-backend/storage/uploads/*
-!backend/storage/uploads/.gitkeep
-storage/uploads/*
-!storage/uploads/.gitkeep
-
-# IDE / Editor
-.idea/
-.vscode/
-*.swp
-*.swo
+**/storage/uploads/*
+!**/storage/uploads/.gitkeep
 
 # Testing / Coverage
 .pytest_cache/
@@ -51,3 +45,13 @@ htmlcov/
 
 # Logs
 *.log
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
