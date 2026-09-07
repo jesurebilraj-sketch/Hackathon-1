@@ -87,8 +87,26 @@ const TeacherStudents = () => {
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    // TODO: Wire to backend API later
-    console.log(`Sending message to ${messagingStudent.name}: ${messageText}`);
+    
+    // Save to local storage for the Student Portal notification system
+    const notificationsKey = `studentNotifications_${messagingStudent.email}`;
+    const notifications = JSON.parse(localStorage.getItem(notificationsKey) || '[]');
+    
+    // Get current teacher's name
+    const teacherNames = { 1: 'Dr. Alan Turing', 2: 'Prof. Grace Hopper', 3: 'Dr. Ada Lovelace' };
+    const teacherId = parseInt(localStorage.getItem('teacherId') || '1');
+    const myName = teacherNames[teacherId] || 'Your Teacher';
+
+    notifications.push({
+      id: Date.now(),
+      sender: myName,
+      message: messageText,
+      timestamp: new Date().toISOString(),
+      read: false
+    });
+    
+    localStorage.setItem(notificationsKey, JSON.stringify(notifications));
+
     alert(`Message sent to ${messagingStudent.name}!`);
     setMessagingStudent(null);
     setMessageText('');
