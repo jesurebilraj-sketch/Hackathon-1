@@ -3,6 +3,11 @@ import { Upload, BookOpen, Users } from 'lucide-react';
 
 const TeacherDashboard = () => {
   const userName = localStorage.getItem('userName') || 'Professor';
+  const teacherId = localStorage.getItem('teacherId') || '1';
+  
+  const savedStats = localStorage.getItem('teacherStats');
+  const teacherStats = savedStats ? JSON.parse(savedStats) : { 1: 0, 2: 0, 3: 0 };
+  const totalStudents = teacherStats[teacherId] || 0;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -35,7 +40,7 @@ const TeacherDashboard = () => {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-gray-900">Total Students</h3>
-            <p className="text-3xl font-bold mt-2">124</p>
+            <p className="text-3xl font-bold mt-2">{totalStudents}</p>
           </div>
         </div>
       </div>

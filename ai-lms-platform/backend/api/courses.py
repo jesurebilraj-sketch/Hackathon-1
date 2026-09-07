@@ -243,6 +243,8 @@ def get_student_enrollments(student_id: int, db: Session = Depends(get_db)):
                 "id": course.id,
                 "title": course.title,
                 "description": course.description,
+                "category": course.category,
+                "imageUrl": course.image_url,
                 "teacher": course.teacher.name if course.teacher else "Unknown",
             }
         })

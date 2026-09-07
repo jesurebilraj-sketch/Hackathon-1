@@ -52,6 +52,12 @@ const Login = () => {
     localStorage.setItem('userName', capitalizedName);
     
     if (role === 'teacher') {
+      // Set teacher ID for mock dashboard data
+      if (email === 'alan.turing@lms.edu') localStorage.setItem('teacherId', '1');
+      else if (email === 'grace.hopper@lms.edu') localStorage.setItem('teacherId', '2');
+      else if (email === 'ada.lovelace@lms.edu') localStorage.setItem('teacherId', '3');
+      else localStorage.setItem('teacherId', '1');
+
       navigate('/teacher/dashboard');
     } else {
       navigate('/student/dashboard');

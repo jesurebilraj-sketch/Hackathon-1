@@ -8,6 +8,10 @@ const CourseTeachers = () => {
   const navigate = useNavigate();
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [enrolling, setEnrolling] = useState(false);
+  const [teacherStats, setTeacherStats] = useState(() => {
+    const saved = localStorage.getItem('teacherStats');
+    return saved ? JSON.parse(saved) : { 1: 0, 2: 0, 3: 0 };
+  });
 
   // Mock data for available teachers and their specific lesson plans
   const availableTeachers = [
@@ -17,7 +21,7 @@ const CourseTeachers = () => {
       email: 'alan.turing@lms.edu',
       avatar: 'https://ui-avatars.com/api/?name=Alan+Turing&background=0D8ABC&color=fff',
       rating: 4.9,
-      students: 1240,
+      students: teacherStats[1] || 0,
       style: 'Theoretical & Intensive',
       schedule: [
         { week: 1, title: 'Foundations & Theory', portions: ['Introduction to Core Concepts', 'Historical Context', 'Basic Syntax'] },
@@ -32,7 +36,7 @@ const CourseTeachers = () => {
       email: 'grace.hopper@lms.edu',
       avatar: 'https://ui-avatars.com/api/?name=Grace+Hopper&background=10B981&color=fff',
       rating: 4.8,
-      students: 890,
+      students: teacherStats[2] || 0,
       style: 'Practical & Project-Based',
       schedule: [
         { week: 1, title: 'Fast-Track Basics', portions: ['Quick Setup', 'Syntax overview', 'First script'] },
@@ -47,7 +51,7 @@ const CourseTeachers = () => {
       email: 'ada.lovelace@lms.edu',
       avatar: 'https://ui-avatars.com/api/?name=Ada+Lovelace&background=8B5CF6&color=fff',
       rating: 5.0,
-      students: 2100,
+      students: teacherStats[3] || 0,
       style: 'Paced & Beginner Friendly',
       schedule: [
         { week: 1, title: 'Gentle Introduction', portions: ['What is this course?', 'Setting up tools slowly'] },
@@ -63,12 +67,23 @@ const CourseTeachers = () => {
     try {
       // Use the actual API! Assuming student id = 1 for the demo
       await api.enrollStudent(1, id);
+      
+      // Increment teacher student count
+      const newStats = { ...teacherStats, [selectedTeacher.id]: (teacherStats[selectedTeacher.id] || 0) + 1 };
+      setTeacherStats(newStats);
+      localStorage.setItem('teacherStats', JSON.stringify(newStats));
+
       alert(`Successfully registered with ${selectedTeacher.name}!`);
-      navigate('/student/courses');
+      navigate('/student/dashboard');
     } catch (err) {
       console.warn("API failed, using mock success.", err);
+      // Increment teacher student count anyway for demo
+      const newStats = { ...teacherStats, [selectedTeacher.id]: (teacherStats[selectedTeacher.id] || 0) + 1 };
+      setTeacherStats(newStats);
+      localStorage.setItem('teacherStats', JSON.stringify(newStats));
+      
       alert(`Successfully registered with ${selectedTeacher.name}! (Mock)`);
-      navigate('/student/courses');
+      navigate('/student/dashboard');
     } finally {
       setEnrolling(false);
     }

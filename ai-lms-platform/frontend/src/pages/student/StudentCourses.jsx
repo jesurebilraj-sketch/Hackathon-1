@@ -6,21 +6,10 @@ const StudentCourses = () => {
   const navigate = useNavigate();
   const [isNewUser, setIsNewUser] = useState(true);
   const [availableCourses, setAvailableCourses] = useState([]);
+  const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Fallback Mock Data
-  const mockMyCourses = [
-    {
-      id: 1, title: 'Python Programming Masterclass', instructor: 'AI Generated', progress: 78,
-      totalModules: 12, completedModules: 9, lastAccessed: '2 hours ago',
-      imageUrl: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=500&q=80'
-    },
-    {
-      id: 2, title: 'Introduction to Data Structures', instructor: 'AI Generated', progress: 34,
-      totalModules: 8, completedModules: 3, lastAccessed: '1 day ago',
-      imageUrl: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=500&q=80'
-    }
-  ];
 
   const mockAvailableCourses = [
     { id: 101, title: 'Advanced React Patterns', category: 'Web Development', imageUrl: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=500&q=80' },
@@ -30,20 +19,41 @@ const StudentCourses = () => {
   ];
 
   React.useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchData = async () => {
       try {
         const { api } = await import('../../services/api');
-        const data = await api.getAllCourses();
-        if (data.courses && data.courses.length > 0) {
-          // Map backend data to frontend model
-          setAvailableCourses(data.courses.map(c => ({
+        
+        // Fetch all available courses
+        const coursesData = await api.getAllCourses();
+        if (coursesData.courses && coursesData.courses.length > 0) {
+          setAvailableCourses(coursesData.courses.map(c => ({
             id: c.id,
             title: c.title,
-            category: 'AI Generated', // Fallback since DB doesn't have category yet
-            imageUrl: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=500&q=80'
+            category: c.category || 'General',
+            imageUrl: c.imageUrl || 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=500&q=80'
           })));
         } else {
           setAvailableCourses(mockAvailableCourses);
+        }
+
+        // Fetch user enrollments (student id = 1 for demo)
+        const enrollmentsData = await api.getStudentEnrollments(1);
+        if (enrollmentsData && enrollmentsData.enrollments && enrollmentsData.enrollments.length > 0) {
+          // Map backend enrollments to frontend model
+          const mappedEnrollments = enrollmentsData.enrollments.map(enr => ({
+            id: enr.course.id,
+            title: enr.course.title,
+            instructor: enr.course.teacher,
+            progress: 0,
+            totalModules: 10,
+            completedModules: 0,
+            lastAccessed: 'Just now',
+            imageUrl: enr.course.imageUrl || 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=500&q=80'
+          }));
+          setEnrolledCourses(mappedEnrollments);
+          setIsNewUser(false);
+        } else {
+          setIsNewUser(true);
         }
       } catch (error) {
         console.warn("Backend API unavailable, using mock data.", error);
@@ -52,7 +62,7 @@ const StudentCourses = () => {
         setLoading(false);
       }
     };
-    fetchCourses();
+    fetchData();
   }, []);
 
   return (
@@ -94,11 +104,11 @@ const StudentCourses = () => {
       )}
 
       {/* Active Courses (only show if enrolled) */}
-      {!isNewUser && (
+      {!isNewUser && enrolledCourses.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-xl font-bold text-gray-900 mb-4">Continue Learning</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {mockMyCourses.map(course => (
+            {enrolledCourses.map(course => (
               <div key={course.id} className="group bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
                 <div className="h-32 w-full overflow-hidden bg-gray-100">
                   <img src={course.imageUrl} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
