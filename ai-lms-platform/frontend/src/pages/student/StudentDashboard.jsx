@@ -14,16 +14,17 @@ const StudentDashboard = () => {
 
   React.useEffect(() => {
     const fetchEnrollments = async () => {
+      let apiEnrollments = [];
       try {
         const { api } = await import('../../services/api');
         // Assume student_id = 1 for demo
         const data = await api.getStudentEnrollments(1);
-        
-        let apiEnrollments = [];
         if (data && data.enrollments) {
           apiEnrollments = data.enrollments;
         }
-
+      } catch (error) {
+        console.warn("Failed to fetch API enrollments. Using local mock state.", error);
+      } finally {
         const mockEnrollments = JSON.parse(localStorage.getItem('mockEnrollments') || '[]');
         const combined = [...apiEnrollments, ...mockEnrollments];
 
@@ -33,9 +34,6 @@ const StudentDashboard = () => {
         } else {
           setIsNewUser(true);
         }
-      } catch (error) {
-        console.warn("Failed to fetch enrollments. Using default state.", error);
-      } finally {
         setLoading(false);
       }
     };

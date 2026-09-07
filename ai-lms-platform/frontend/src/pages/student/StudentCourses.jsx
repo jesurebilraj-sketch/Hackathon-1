@@ -20,6 +20,7 @@ const StudentCourses = () => {
 
   React.useEffect(() => {
     const fetchData = async () => {
+      let apiEnrollments = [];
       try {
         const { api } = await import('../../services/api');
         
@@ -38,35 +39,33 @@ const StudentCourses = () => {
 
         // Fetch user enrollments (student id = 1 for demo)
         const enrollmentsData = await api.getStudentEnrollments(1);
-        let apiEnrollments = [];
         if (enrollmentsData && enrollmentsData.enrollments) {
           apiEnrollments = enrollmentsData.enrollments;
         }
-
+      } catch (error) {
+        console.warn("Backend API unavailable, using mock data.", error);
+        setAvailableCourses(mockAvailableCourses);
+      } finally {
         const mockLocalEnrollments = JSON.parse(localStorage.getItem('mockEnrollments') || '[]');
         const combinedEnrollments = [...apiEnrollments, ...mockLocalEnrollments];
 
         if (combinedEnrollments.length > 0) {
           // Map backend/mock enrollments to frontend model
           const mappedEnrollments = combinedEnrollments.map(enr => ({
-            id: enr.course.id,
-            title: enr.course.title,
-            instructor: enr.course.teacher,
+            id: enr.course ? enr.course.id : enr.id,
+            title: enr.course ? enr.course.title : enr.title,
+            instructor: enr.course ? enr.course.teacher : enr.instructor,
             progress: 0,
             totalModules: 10,
             completedModules: 0,
             lastAccessed: 'Just now',
-            imageUrl: enr.course.imageUrl || 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=500&q=80'
+            imageUrl: (enr.course && enr.course.imageUrl) ? enr.course.imageUrl : 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=500&q=80'
           }));
           setEnrolledCourses(mappedEnrollments);
           setIsNewUser(false);
         } else {
           setIsNewUser(true);
         }
-      } catch (error) {
-        console.warn("Backend API unavailable, using mock data.", error);
-        setAvailableCourses(mockAvailableCourses);
-      } finally {
         setLoading(false);
       }
     };
