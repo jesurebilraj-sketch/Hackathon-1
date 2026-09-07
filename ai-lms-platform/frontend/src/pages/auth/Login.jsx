@@ -8,6 +8,11 @@ const Login = () => {
 
   const handleLogin = (e) => {
     e.preventDefault();
+    const email = e.target.email.value;
+    const name = email.split('@')[0];
+    const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1);
+    localStorage.setItem('userName', capitalizedName);
+    
     if (role === 'teacher') {
       navigate('/teacher/dashboard');
     } else {

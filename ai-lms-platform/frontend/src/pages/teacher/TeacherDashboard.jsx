@@ -2,9 +2,11 @@ import React from 'react';
 import { Upload, BookOpen, Users } from 'lucide-react';
 
 const TeacherDashboard = () => {
+  const userName = localStorage.getItem('userName') || 'Professor';
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Welcome back, Professor</h1>
+      <h1 className="text-2xl font-bold text-gray-900">Welcome back, {userName}</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center justify-center text-center space-y-4 hover:border-blue-300 hover:shadow-md cursor-pointer transition-all">

@@ -24,7 +24,7 @@ const Navbar = ({ role }) => {
             <User size={16} />
           </div>
           <span className="text-sm font-medium text-gray-700 hidden sm:block">
-            {role === 'teacher' ? 'Prof. Smith' : 'Alex Student'}
+            {localStorage.getItem('userName') || (role === 'teacher' ? 'Prof. Smith' : 'Alex Student')}
           </span>
           <button 
             onClick={handleLogout}

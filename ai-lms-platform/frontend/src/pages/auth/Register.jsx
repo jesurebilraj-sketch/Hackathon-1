@@ -8,6 +8,8 @@ const Register = () => {
 
   const handleRegister = (e) => {
     e.preventDefault();
+    const name = e.target.name.value;
+    localStorage.setItem('userName', name);
     if (role === 'teacher') {
       navigate('/teacher/dashboard');
     } else {

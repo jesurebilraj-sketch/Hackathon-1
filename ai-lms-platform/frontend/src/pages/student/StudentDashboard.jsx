@@ -6,6 +6,7 @@ const StudentDashboard = () => {
   // Demo toggle to switch between new user and active user states
   const [isNewUser, setIsNewUser] = useState(true);
   const navigate = useNavigate();
+  const userName = localStorage.getItem('userName') || 'Alex';
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
@@ -28,7 +29,7 @@ const StudentDashboard = () => {
       </div>
 
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Good Morning, Alex 👋</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Good Morning, {userName} 👋</h1>
         <p className="text-gray-600 mt-1">
           {isNewUser ? 'Welcome to AI-LMS! Start your learning journey today.' : 'Here is your learning summary for today.'}
         </p>
