@@ -95,7 +95,7 @@ const StudentCourses = () => {
                   <div className="p-5 flex flex-col flex-1">
                     <span className="text-xs font-semibold text-blue-600 tracking-wider uppercase mb-2">{course.category}</span>
                     <h4 className="font-bold text-gray-900 mb-4 flex-1">{course.title}</h4>
-                    <button className="w-full py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:border-blue-300 transition-colors">
+                    <button className="w-full py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:border-blue-300 transition-colors cursor-pointer">
                       Register Course
                     </button>
                   </div>

@@ -47,7 +47,7 @@ const StudentDashboard = () => {
           </p>
           <button 
             onClick={() => navigate('/student/courses')}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-sm flex items-center gap-2 transition-colors"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-sm flex items-center gap-2 transition-colors cursor-pointer"
           >
             <BookOpen size={20} />
             Browse & Register for Courses
