@@ -64,9 +64,12 @@ const CourseTeachers = () => {
 
   const handleEnroll = async () => {
     setEnrolling(true);
+    const studentId = parseInt(localStorage.getItem('studentId') || '1');
+    const userEmail = localStorage.getItem('userEmail') || 'default';
+
     try {
-      // Use the actual API! Assuming student id = 1 for the demo
-      await api.enrollStudent(1, id);
+      // Use the actual API!
+      await api.enrollStudent(studentId, id);
       
       // Increment teacher student count
       const newStats = { ...teacherStats, [selectedTeacher.id]: (teacherStats[selectedTeacher.id] || 0) + 1 };
@@ -82,8 +85,8 @@ const CourseTeachers = () => {
       setTeacherStats(newStats);
       localStorage.setItem('teacherStats', JSON.stringify(newStats));
       
-      // Save a mock enrollment to localStorage so the dashboard works
-      const mockEnrollments = JSON.parse(localStorage.getItem('mockEnrollments') || '[]');
+      // Save a mock enrollment to localStorage scoped to this user
+      const mockEnrollments = JSON.parse(localStorage.getItem(`mockEnrollments_${userEmail}`) || '[]');
       if (!mockEnrollments.find(e => e.course.id == id)) {
         mockEnrollments.push({
           enrollment_id: Date.now(),
@@ -94,7 +97,7 @@ const CourseTeachers = () => {
             teacher: selectedTeacher.name
           }
         });
-        localStorage.setItem('mockEnrollments', JSON.stringify(mockEnrollments));
+        localStorage.setItem(`mockEnrollments_${userEmail}`, JSON.stringify(mockEnrollments));
       }
       
       alert(`Successfully registered with ${selectedTeacher.name}!`);

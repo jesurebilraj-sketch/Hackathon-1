@@ -21,6 +21,9 @@ const StudentCourses = () => {
   React.useEffect(() => {
     const fetchData = async () => {
       let apiEnrollments = [];
+      const studentId = parseInt(localStorage.getItem('studentId') || '1');
+      const userEmail = localStorage.getItem('userEmail') || 'default';
+      
       try {
         const { api } = await import('../../services/api');
         
@@ -37,8 +40,8 @@ const StudentCourses = () => {
           setAvailableCourses(mockAvailableCourses);
         }
 
-        // Fetch user enrollments (student id = 1 for demo)
-        const enrollmentsData = await api.getStudentEnrollments(1);
+        // Fetch user enrollments dynamically
+        const enrollmentsData = await api.getStudentEnrollments(studentId);
         if (enrollmentsData && enrollmentsData.enrollments) {
           apiEnrollments = enrollmentsData.enrollments;
         }
@@ -46,7 +49,7 @@ const StudentCourses = () => {
         console.warn("Backend API unavailable, using mock data.", error);
         setAvailableCourses(mockAvailableCourses);
       } finally {
-        const mockLocalEnrollments = JSON.parse(localStorage.getItem('mockEnrollments') || '[]');
+        const mockLocalEnrollments = JSON.parse(localStorage.getItem(`mockEnrollments_${userEmail}`) || '[]');
         const combinedEnrollments = [...apiEnrollments, ...mockLocalEnrollments];
 
         if (combinedEnrollments.length > 0) {

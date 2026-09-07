@@ -55,6 +55,7 @@ const Login = () => {
     const capitalizedName = cleanName.split(' ').map(n => n.charAt(0).toUpperCase() + n.slice(1)).join(' ');
     
     localStorage.setItem('userName', capitalizedName);
+    localStorage.setItem('userEmail', email);
     
     if (role === 'teacher') {
       // Set teacher ID for mock dashboard data
@@ -65,6 +66,14 @@ const Login = () => {
 
       navigate('/teacher/dashboard');
     } else {
+      // Generate a stable student ID based on email string
+      let hash = 0;
+      for (let i = 0; i < email.length; i++) {
+          hash = email.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const studentId = Math.abs(hash) % 10000;
+      localStorage.setItem('studentId', studentId.toString());
+      
       navigate('/student/dashboard');
     }
   };

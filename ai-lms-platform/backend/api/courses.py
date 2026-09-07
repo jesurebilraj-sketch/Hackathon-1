@@ -205,7 +205,7 @@ def enroll_student(student_id: int, course_id: int, db: Session = Depends(get_db
     # Check if student exists, if not, auto-create for the demo
     student = db.query(User).filter(User.id == student_id, User.role == "student").first()
     if not student:
-        student = User(id=student_id, name="Demo Student", email="student@lms.com", role="student")
+        student = User(id=student_id, name=f"Demo Student {student_id}", email=f"student_{student_id}@lms.com", role="student")
         db.add(student)
         db.commit()
         db.refresh(student)
