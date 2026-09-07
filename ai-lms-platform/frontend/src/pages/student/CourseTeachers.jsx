@@ -98,6 +98,21 @@ const CourseTeachers = () => {
           }
         });
         localStorage.setItem(`mockEnrollments_${userEmail}`, JSON.stringify(mockEnrollments));
+        
+        // Save to global teacher students list for the Teacher Portal demo
+        const userName = localStorage.getItem('userName') || 'Demo Student';
+        const teacherStudentsKey = `teacherStudents_${selectedTeacher.id}`;
+        const mockTeacherStudents = JSON.parse(localStorage.getItem(teacherStudentsKey) || '[]');
+        mockTeacherStudents.push({
+          id: studentId,
+          name: userName,
+          email: userEmail,
+          course: `Enrolled Course #${id}`,
+          progress: 0,
+          lastActive: 'Just now',
+          modules: []
+        });
+        localStorage.setItem(teacherStudentsKey, JSON.stringify(mockTeacherStudents));
       }
       
       alert(`Successfully registered with ${selectedTeacher.name}!`);
