@@ -94,7 +94,7 @@ const StudentCourses = () => {
                   </div>
                   <div className="p-5 flex flex-col flex-1">
                     <span className="text-xs font-semibold text-blue-600 tracking-wider uppercase mb-2">{course.category}</span>
-                    <h4 className="font-bold text-gray-900 mb-4 flex-1">{course.title}</h4>
+                    <h4 className="font-bold text-gray-900 mb-4 flex-1 cursor-pointer hover:text-blue-600 transition-colors">{course.title}</h4>
                     <button className="w-full py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:border-blue-300 transition-colors cursor-pointer">
                       Register Course
                     </button>
@@ -115,8 +115,8 @@ const StudentCourses = () => {
                 </div>
                 <div className="p-6 flex flex-col flex-1">
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900 line-clamp-2">{course.title}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{course.instructor}</p>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2 cursor-pointer hover:text-blue-600 transition-colors">{course.title}</h3>
+                    <p className="text-sm text-gray-500 mb-4">By {course.instructor}</p>
                     
                     <div className="mt-6">
                       <div className="flex justify-between items-end mb-2">
