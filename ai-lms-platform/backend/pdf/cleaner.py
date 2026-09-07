@@ -98,6 +98,15 @@ def clean_line_wrapping(text: str) -> str:
                 # If previous line ends with a colon, keep current line separate
                 elif prev_line.endswith(":"):
                     merged_para.append(stripped)
+                # If current line is an isolated number or slide artifact, keep on new line
+                elif re.match(r'^\d+$', stripped) or re.match(r'^\d+\s+\d+$', stripped):
+                    merged_para.append(stripped)
+                # If current line is a short unpunctuated heading/label, keep on new line
+                elif len(stripped) < 40 and not stripped.endswith(('.', ',', ';', '-', '?', '!')) and stripped[0].isupper():
+                    merged_para.append(stripped)
+                # Prevent merging short, unpunctuated layout artifacts
+                elif len(prev_line) < 60 and not prev_line.endswith(('.', ',', ';', '-', '?', '!')) and (stripped[0].isupper() or stripped.isdigit()):
+                    merged_para.append(stripped)
                 else:
                     # Soft wrap: merge with single space
                     merged_para[-1] = f"{prev_line} {stripped}"

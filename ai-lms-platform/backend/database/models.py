@@ -79,6 +79,14 @@ class Lesson(Base):
     difficulty = Column(String(50), default="beginner", nullable=True)
     source_pages = Column(JSON, nullable=True)
 
+    # Phase 4: Rich educational content fields
+    learning_objectives = Column(JSON, nullable=True)
+    key_concepts = Column(JSON, nullable=True)
+    examples = Column(JSON, nullable=True)
+    key_takeaways = Column(JSON, nullable=True)
+    misconceptions = Column(JSON, nullable=True)
+    practice_questions = Column(JSON, nullable=True)
+
     # Relationships
     module = relationship("Module", back_populates="lessons")
 

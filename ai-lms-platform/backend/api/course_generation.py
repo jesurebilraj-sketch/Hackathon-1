@@ -96,8 +96,13 @@ def generate_course_curriculum(course_id: int, db: Session = Depends(get_db)):
 
     # 6. Atomically persist modules and lessons in the database
     try:
-        # Clear existing modules/lessons if regenerating
-        db.query(Module).filter(Module.course_id == course.id).delete()
+        # Clear existing lessons and modules if regenerating
+        existing_module_ids = [
+            m_id for (m_id,) in db.query(Module.id).filter(Module.course_id == course.id).all()
+        ]
+        if existing_module_ids:
+            db.query(Lesson).filter(Lesson.module_id.in_(existing_module_ids)).delete(synchronize_session=False)
+        db.query(Module).filter(Module.course_id == course.id).delete(synchronize_session=False)
         db.flush()
 
         # Update course description if provided
