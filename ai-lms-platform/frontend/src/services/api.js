@@ -36,6 +36,11 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/courses/teacher/${teacherId}`);
     return handleResponse(response);
   },
+  
+  getTeacherStudents: async (teacherId) => {
+    const response = await fetch(`${API_BASE_URL}/courses/teacher/${teacherId}/students`);
+    return handleResponse(response);
+  },
 
   // Student specific
   enrollStudent: async (studentId, courseId) => {

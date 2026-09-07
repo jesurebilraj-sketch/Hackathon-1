@@ -200,6 +200,29 @@ def get_teacher_courses(teacher_id: int, db: Session = Depends(get_db)):
         ]
     }
 
+@router.get("/teacher/{teacher_id}/students", summary="Get all students enrolled in a teacher's courses")
+def get_teacher_students(teacher_id: int, db: Session = Depends(get_db)):
+    courses = db.query(Course).filter(Course.teacher_id == teacher_id).all()
+    course_ids = [c.id for c in courses]
+    
+    enrollments = db.query(Enrollment).filter(Enrollment.course_id.in_(course_ids)).all()
+    
+    results = []
+    for enr in enrollments:
+        student = enr.student
+        course = enr.course
+        results.append({
+            "id": student.id,
+            "name": student.name,
+            "email": student.email,
+            "course": course.title,
+            "progress": 0, # Default for demo
+            "lastActive": "Just now",
+            "modules": [] # Default for demo
+        })
+        
+    return {"count": len(results), "students": results}
+
 @router.post("/student/{student_id}/enroll/{course_id}", summary="Enroll a student in a course")
 def enroll_student(student_id: int, course_id: int, db: Session = Depends(get_db)):
     # Check if student exists, if not, auto-create for the demo
