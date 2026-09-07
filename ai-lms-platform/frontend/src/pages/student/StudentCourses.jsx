@@ -38,9 +38,17 @@ const StudentCourses = () => {
 
         // Fetch user enrollments (student id = 1 for demo)
         const enrollmentsData = await api.getStudentEnrollments(1);
-        if (enrollmentsData && enrollmentsData.enrollments && enrollmentsData.enrollments.length > 0) {
-          // Map backend enrollments to frontend model
-          const mappedEnrollments = enrollmentsData.enrollments.map(enr => ({
+        let apiEnrollments = [];
+        if (enrollmentsData && enrollmentsData.enrollments) {
+          apiEnrollments = enrollmentsData.enrollments;
+        }
+
+        const mockLocalEnrollments = JSON.parse(localStorage.getItem('mockEnrollments') || '[]');
+        const combinedEnrollments = [...apiEnrollments, ...mockLocalEnrollments];
+
+        if (combinedEnrollments.length > 0) {
+          // Map backend/mock enrollments to frontend model
+          const mappedEnrollments = combinedEnrollments.map(enr => ({
             id: enr.course.id,
             title: enr.course.title,
             instructor: enr.course.teacher,

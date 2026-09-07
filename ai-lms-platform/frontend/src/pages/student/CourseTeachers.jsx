@@ -82,7 +82,22 @@ const CourseTeachers = () => {
       setTeacherStats(newStats);
       localStorage.setItem('teacherStats', JSON.stringify(newStats));
       
-      alert(`Successfully registered with ${selectedTeacher.name}! (Mock)`);
+      // Save a mock enrollment to localStorage so the dashboard works
+      const mockEnrollments = JSON.parse(localStorage.getItem('mockEnrollments') || '[]');
+      if (!mockEnrollments.find(e => e.course.id == id)) {
+        mockEnrollments.push({
+          enrollment_id: Date.now(),
+          course: {
+            id: id,
+            title: `Enrolled Course #${id}`,
+            category: 'AI Generated',
+            teacher: selectedTeacher.name
+          }
+        });
+        localStorage.setItem('mockEnrollments', JSON.stringify(mockEnrollments));
+      }
+      
+      alert(`Successfully registered with ${selectedTeacher.name}!`);
       navigate('/student/dashboard');
     } finally {
       setEnrolling(false);

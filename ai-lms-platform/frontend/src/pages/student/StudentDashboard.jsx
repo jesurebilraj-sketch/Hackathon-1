@@ -18,8 +18,17 @@ const StudentDashboard = () => {
         const { api } = await import('../../services/api');
         // Assume student_id = 1 for demo
         const data = await api.getStudentEnrollments(1);
-        if (data && data.enrollments && data.enrollments.length > 0) {
-          setEnrollments(data.enrollments);
+        
+        let apiEnrollments = [];
+        if (data && data.enrollments) {
+          apiEnrollments = data.enrollments;
+        }
+
+        const mockEnrollments = JSON.parse(localStorage.getItem('mockEnrollments') || '[]');
+        const combined = [...apiEnrollments, ...mockEnrollments];
+
+        if (combined.length > 0) {
+          setEnrollments(combined);
           setIsNewUser(false);
         } else {
           setIsNewUser(true);

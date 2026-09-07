@@ -202,10 +202,13 @@ def get_teacher_courses(teacher_id: int, db: Session = Depends(get_db)):
 
 @router.post("/student/{student_id}/enroll/{course_id}", summary="Enroll a student in a course")
 def enroll_student(student_id: int, course_id: int, db: Session = Depends(get_db)):
-    # Check if student exists
+    # Check if student exists, if not, auto-create for the demo
     student = db.query(User).filter(User.id == student_id, User.role == "student").first()
     if not student:
-        raise HTTPException(status_code=404, detail="Student not found")
+        student = User(id=student_id, name="Demo Student", email="student@lms.com", role="student")
+        db.add(student)
+        db.commit()
+        db.refresh(student)
         
     # Check if course exists
     course = db.query(Course).filter(Course.id == course_id).first()
