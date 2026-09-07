@@ -42,6 +42,11 @@ const Login = () => {
         setError('Invalid Teacher Email. Access denied. Please use a registered teacher account (e.g., alan.turing@lms.edu).');
         return;
       }
+    } else if (role === 'student') {
+      if (validTeacherEmails.includes(email)) {
+        setError('This email is registered as a Teacher. Please select the Teacher login portal.');
+        return;
+      }
     }
 
     // 3. Success -> Proceed to login
