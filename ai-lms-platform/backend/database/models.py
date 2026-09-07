@@ -84,3 +84,48 @@ class Lesson(Base):
 
     def __repr__(self):
         return f"<Lesson id={self.id} title='{self.title}' order={self.order_number}>"
+
+
+class Enrollment(Base):
+    __tablename__ = "enrollments"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    student_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
+    enrolled_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    last_accessed = Column(DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Relationships
+    student = relationship("User", backref="enrollments")
+    course = relationship("Course", backref="enrollments")
+
+
+class StudentProgress(Base):
+    __tablename__ = "student_progress"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    student_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    module_id = Column(Integer, ForeignKey("modules.id", ondelete="CASCADE"), nullable=False)
+    score = Column(Integer, default=0, nullable=False)
+    grade = Column(String(10), default="Pending", nullable=False)
+    completed = Column(Integer, default=0, nullable=False) # 0 for false, 1 for true
+    completed_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    student = relationship("User", backref="progress")
+    module = relationship("Module", backref="student_progress")
+
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    sender_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    receiver_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    content = Column(Text, nullable=False)
+    sent_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    is_read = Column(Integer, default=0, nullable=False) # 0 for false, 1 for true
+
+    # Relationships
+    sender = relationship("User", foreign_keys=[sender_id], backref="sent_messages")
+    receiver = relationship("User", foreign_keys=[receiver_id], backref="received_messages")

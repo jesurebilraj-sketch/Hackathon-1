@@ -18,7 +18,7 @@ else:
 
 from database.database import init_db, check_db_connection, get_db
 # Explicitly import models to guarantee registration on Base.metadata
-from database.models import User, Course, Module, Lesson  # noqa: F401
+from database.models import User, Course, Module, Lesson, Enrollment, StudentProgress, Message  # noqa: F401
 from api import (
     courses_router,
     course_generation_router,
