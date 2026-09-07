@@ -37,17 +37,19 @@ const StudentDashboard = () => {
 
       {isNewUser ? (
         // Empty State for New User
-        <div className="bg-white p-12 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center justify-center text-center">
-          <div className="w-20 h-20 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-6">
+        <div className="glass-card p-12 rounded-2xl border border-white/50 shadow-xl flex flex-col items-center justify-center text-center animate-fade-in-up">
+          <div className="w-20 h-20 bg-gradient-to-tr from-blue-100 to-indigo-50 text-blue-600 rounded-full flex items-center justify-center mb-6 shadow-inner">
             <Compass size={40} />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">You haven't enrolled in any courses yet</h2>
-          <p className="text-gray-500 max-w-md mb-8">
+          <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 mb-3">
+            You haven't enrolled in any courses yet
+          </h2>
+          <p className="text-gray-500 max-w-md mb-8 text-lg">
             Explore our AI-generated courses tailored to your learning pace, or upload a syllabus to let the AI create a custom learning path just for you.
           </p>
           <button 
             onClick={() => navigate('/student/courses')}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-sm flex items-center gap-2 transition-colors"
+            className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-bold hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 flex items-center gap-2 transition-all duration-300 transform hover:-translate-y-1"
           >
             <BookOpen size={20} />
             Browse & Register for Courses
@@ -56,8 +58,8 @@ const StudentDashboard = () => {
       ) : (
         // Active User State
         <>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in-up">
+            <div className="lg:col-span-2 glass-card p-8 rounded-2xl border border-white/50 shadow-xl hover:shadow-2xl transition-shadow duration-300">
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <h2 className="text-lg font-bold text-gray-900">Current Course</h2>
@@ -86,30 +88,30 @@ const StudentDashboard = () => {
             </div>
 
             <div className="space-y-6">
-              <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-start gap-4">
-                <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center shrink-0">
-                  <Target size={24} />
+              <div className="glass-card p-6 rounded-2xl border border-white/50 shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 flex items-start gap-4">
+                <div className="w-14 h-14 bg-gradient-to-tr from-indigo-100 to-purple-50 text-indigo-600 rounded-2xl flex items-center justify-center shrink-0 shadow-inner">
+                  <Target size={28} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-500">Overall Mastery</h3>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">72%</p>
+                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Overall Mastery</h3>
+                  <p className="text-3xl font-extrabold text-gray-900 mt-1">72%</p>
                 </div>
               </div>
               
-              <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-start gap-4">
-                <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center shrink-0">
-                  <Clock size={24} />
+              <div className="glass-card p-6 rounded-2xl border border-white/50 shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 flex items-start gap-4 animate-delay-100">
+                <div className="w-14 h-14 bg-gradient-to-tr from-amber-100 to-orange-50 text-amber-600 rounded-2xl flex items-center justify-center shrink-0 shadow-inner">
+                  <Clock size={28} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-500">Study Time Today</h3>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">45m</p>
+                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Study Time Today</h3>
+                  <p className="text-3xl font-extrabold text-gray-900 mt-1">45m</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in-up animate-delay-200">
+            <div className="glass-card p-8 rounded-2xl border border-white/50 shadow-xl hover:shadow-2xl transition-shadow duration-300">
               <h2 className="text-lg font-bold text-gray-900 mb-4">Today's Study Plan</h2>
               <div className="space-y-4">
                 <div className="flex gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100">
@@ -142,7 +144,7 @@ const StudentDashboard = () => {
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+            <div className="glass-card p-8 rounded-2xl border border-white/50 shadow-xl hover:shadow-2xl transition-shadow duration-300">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold text-gray-900">Needs Attention</h2>
                 <span className="text-xs font-medium px-2 py-1 bg-amber-100 text-amber-800 rounded-full">AI Insight</span>

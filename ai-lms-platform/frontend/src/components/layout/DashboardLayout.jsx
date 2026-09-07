@@ -5,11 +5,11 @@ import Navbar from './Navbar';
 
 const DashboardLayout = ({ role }) => {
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-white selection:bg-blue-100 selection:text-blue-900">
       <Sidebar role={role} />
       <div className="flex flex-col flex-1 overflow-hidden">
         <Navbar role={role} />
-        <main className="flex-1 overflow-y-auto p-6 bg-slate-50">
+        <main className="flex-1 overflow-y-auto p-6 bg-gradient-mesh">
           <Outlet />
         </main>
       </div>
