@@ -35,14 +35,14 @@ const Login = () => {
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           <div className="space-y-4 rounded-md shadow-sm">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {role === 'student' ? 'Student E-mail' : 'Teacher E-mail'}
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                {role === 'student' ? 'Student Email:' : 'Teacher Email:'}
               </label>
               <input name="email" type="email" required className="relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Email address" defaultValue="demo@example.com" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                Password:
               </label>
               <div className="relative">
                 <input name="password" type={showPassword ? "text" : "password"} required className="relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-10" placeholder="Password" defaultValue="password" />
@@ -70,7 +70,7 @@ const Login = () => {
             </div>
           </div>
           <div>
-            <button type="submit" className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Sign in</button>
+            <button type="submit" className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer transition-colors">Sign in</button>
           </div>
           <div className="text-center text-sm">
             <span className="text-gray-600">Don't have an account? </span>
