@@ -14,7 +14,7 @@ const StudentCourses = () => {
       totalModules: 12,
       completedModules: 9,
       lastAccessed: '2 hours ago',
-      thumbnail: 'bg-blue-100 text-blue-600'
+      imageUrl: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=500&q=80'
     },
     {
       id: 2,
@@ -24,7 +24,7 @@ const StudentCourses = () => {
       totalModules: 8,
       completedModules: 3,
       lastAccessed: '1 day ago',
-      thumbnail: 'bg-indigo-100 text-indigo-600'
+      imageUrl: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=500&q=80'
     },
     {
       id: 3,
@@ -34,15 +34,15 @@ const StudentCourses = () => {
       totalModules: 15,
       completedModules: 0,
       lastAccessed: 'Never',
-      thumbnail: 'bg-emerald-100 text-emerald-600'
+      imageUrl: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=500&q=80'
     }
   ];
 
   const recommendedCourses = [
-    { id: 101, title: 'Advanced React Patterns', category: 'Web Development' },
-    { id: 102, title: 'Calculus I', category: 'Mathematics' },
-    { id: 103, title: 'World History: 20th Century', category: 'History' },
-    { id: 104, title: 'Physics for Engineers', category: 'Science' },
+    { id: 101, title: 'Advanced React Patterns', category: 'Web Development', imageUrl: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=500&q=80' },
+    { id: 102, title: 'Calculus I', category: 'Mathematics', imageUrl: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=500&q=80' },
+    { id: 103, title: 'World History: 20th Century', category: 'History', imageUrl: 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?w=500&q=80' },
+    { id: 104, title: 'Physics for Engineers', category: 'Science', imageUrl: 'https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?w=500&q=80' },
   ];
 
   return (
@@ -88,9 +88,9 @@ const StudentCourses = () => {
             <h3 className="text-xl font-bold text-gray-900 mb-6">Available Courses</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {recommendedCourses.map(course => (
-                <div key={course.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow flex flex-col">
-                  <div className="h-32 bg-gray-100 flex items-center justify-center">
-                    <BookOpen size={40} className="text-gray-300" />
+                <div key={course.id} className="group bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow flex flex-col">
+                  <div className="h-32 w-full overflow-hidden bg-gray-100">
+                    <img src={course.imageUrl} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   </div>
                   <div className="p-5 flex flex-col flex-1">
                     <span className="text-xs font-semibold text-blue-600 tracking-wider uppercase mb-2">{course.category}</span>
@@ -109,9 +109,9 @@ const StudentCourses = () => {
           {/* Active Courses List */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {myCourses.map(course => (
-              <div key={course.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
-                <div className={`h-32 ${course.thumbnail} flex items-center justify-center`}>
-                  <BookOpen size={40} />
+              <div key={course.id} className="group bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                <div className="h-32 w-full overflow-hidden bg-gray-100">
+                  <img src={course.imageUrl} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 </div>
                 <div className="p-6 flex flex-col flex-1">
                   <div className="flex-1">
