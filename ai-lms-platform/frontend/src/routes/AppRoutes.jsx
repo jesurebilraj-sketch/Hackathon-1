@@ -12,6 +12,7 @@ import CourseBuilder from '../pages/teacher/CourseBuilder';
 // Student Pages
 import StudentDashboard from '../pages/student/StudentDashboard';
 import StudentCourses from '../pages/student/StudentCourses';
+import CategoryCourses from '../pages/student/CategoryCourses';
 
 // Common
 import Placeholder from '../components/common/Placeholder';
@@ -39,6 +40,7 @@ const AppRoutes = () => {
         <Route path="/student" element={<DashboardLayout role="student" />}>
           <Route path="dashboard" element={<StudentDashboard />} />
           <Route path="courses" element={<StudentCourses />} />
+          <Route path="courses/category/:category" element={<CategoryCourses />} />
           <Route path="study-plan" element={<Placeholder title="AI Study Planner" />} />
           <Route path="tutor" element={<Placeholder title="AI Tutor Chat" />} />
           <Route path="progress" element={<Placeholder title="Learning Progress" />} />
