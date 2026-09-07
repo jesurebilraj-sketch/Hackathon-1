@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { BookOpen, PlayCircle, CheckCircle, Search, Compass } from 'lucide-react';
 
 const StudentCourses = () => {
-  const navigate = useNavigate();
   // Demo toggle for presentation purposes
   const [isNewUser, setIsNewUser] = useState(true);
 
