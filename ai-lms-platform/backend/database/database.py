@@ -84,6 +84,58 @@ def migrate_schema(eng):
                 if "practice_questions" not in existing_columns:
                     logger.info("Migrating schema: adding 'practice_questions' to 'lessons' table.")
                     conn.execute(text("ALTER TABLE lessons ADD COLUMN practice_questions JSON DEFAULT NULL"))
+
+        if "quizzes" in table_names:
+            existing_quiz_cols = {col["name"] for col in inspector.get_columns("quizzes")}
+            with eng.begin() as conn:
+                if "quiz_type" not in existing_quiz_cols:
+                    logger.info("Migrating schema: adding 'quiz_type' to 'quizzes' table.")
+                    conn.execute(text("ALTER TABLE quizzes ADD COLUMN quiz_type VARCHAR(50) DEFAULT 'lesson_quiz'"))
+                if "passing_score_percentage" not in existing_quiz_cols:
+                    logger.info("Migrating schema: adding 'passing_score_percentage' to 'quizzes' table.")
+                    conn.execute(text("ALTER TABLE quizzes ADD COLUMN passing_score_percentage INTEGER DEFAULT 70"))
+                if "time_limit_minutes" not in existing_quiz_cols:
+                    logger.info("Migrating schema: adding 'time_limit_minutes' to 'quizzes' table.")
+                    conn.execute(text("ALTER TABLE quizzes ADD COLUMN time_limit_minutes INTEGER DEFAULT NULL"))
+                if "is_fallback" not in existing_quiz_cols:
+                    logger.info("Migrating schema: adding 'is_fallback' to 'quizzes' table.")
+                    conn.execute(text("ALTER TABLE quizzes ADD COLUMN is_fallback BOOLEAN DEFAULT 0"))
+
+        if "quiz_questions" in table_names:
+            existing_qq_cols = {col["name"] for col in inspector.get_columns("quiz_questions")}
+            with eng.begin() as conn:
+                if "concept" not in existing_qq_cols:
+                    logger.info("Migrating schema: adding 'concept' to 'quiz_questions' table.")
+                    conn.execute(text("ALTER TABLE quiz_questions ADD COLUMN concept VARCHAR(255) DEFAULT NULL"))
+                if "points" not in existing_qq_cols:
+                    logger.info("Migrating schema: adding 'points' to 'quiz_questions' table.")
+                    conn.execute(text("ALTER TABLE quiz_questions ADD COLUMN points INTEGER DEFAULT 1"))
+                if "difficulty" not in existing_qq_cols:
+                    logger.info("Migrating schema: adding 'difficulty' to 'quiz_questions' table.")
+                    conn.execute(text("ALTER TABLE quiz_questions ADD COLUMN difficulty VARCHAR(50) DEFAULT 'medium'"))
+                if "order_number" not in existing_qq_cols:
+                    logger.info("Migrating schema: adding 'order_number' to 'quiz_questions' table.")
+                    conn.execute(text("ALTER TABLE quiz_questions ADD COLUMN order_number INTEGER DEFAULT 1"))
+
+        if "quiz_submissions" in table_names:
+            existing_qs_cols = {col["name"] for col in inspector.get_columns("quiz_submissions")}
+            with eng.begin() as conn:
+                if "feedback" not in existing_qs_cols:
+                    logger.info("Migrating schema: adding 'feedback' to 'quiz_submissions' table.")
+                    conn.execute(text("ALTER TABLE quiz_submissions ADD COLUMN feedback JSON DEFAULT NULL"))
+
+        if "user_mastery" in table_names:
+            existing_um_cols = {col["name"] for col in inspector.get_columns("user_mastery")}
+            with eng.begin() as conn:
+                if "concept" not in existing_um_cols:
+                    logger.info("Migrating schema: adding 'concept' to 'user_mastery' table.")
+                    conn.execute(text("ALTER TABLE user_mastery ADD COLUMN concept VARCHAR(255) DEFAULT NULL"))
+                if "attempts_count" not in existing_um_cols:
+                    logger.info("Migrating schema: adding 'attempts_count' to 'user_mastery' table.")
+                    conn.execute(text("ALTER TABLE user_mastery ADD COLUMN attempts_count INTEGER DEFAULT 1"))
+                if "status" not in existing_um_cols:
+                    logger.info("Migrating schema: adding 'status' to 'user_mastery' table.")
+                    conn.execute(text("ALTER TABLE user_mastery ADD COLUMN status VARCHAR(50) DEFAULT 'needs_review'"))
     except Exception as exc:
         logger.warning("Lightweight schema migration check notice: %s", exc)
 
