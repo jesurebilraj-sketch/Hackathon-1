@@ -35,21 +35,41 @@ const StudentCourses = () => {
         const mockLocalEnrollments = JSON.parse(localStorage.getItem(`mockEnrollments_${userEmail}`) || '[]');
         const combinedEnrollments = [...apiEnrollments, ...mockLocalEnrollments];
 
-        if (combinedEnrollments.length > 0) {
+        // Filter enrolled courses so that ONLY administrator-approved courses appear
+        const approvedOnlyEnrollments = combinedEnrollments.filter(enr => {
+          const cId = enr.course ? enr.course.id : enr.id;
+          const cTitle = enr.course ? enr.course.title : enr.title;
+          return adminApproved.some(ac => 
+            String(ac.id) === String(cId) || 
+            (ac.title && cTitle && ac.title.trim().toLowerCase() === cTitle.trim().toLowerCase())
+          );
+        });
+
+        if (approvedOnlyEnrollments.length > 0) {
           // Map backend/mock enrollments to frontend model
-          const mappedEnrollments = combinedEnrollments.map(enr => ({
-            id: enr.course ? enr.course.id : enr.id,
-            title: enr.course ? enr.course.title : enr.title,
-            instructor: enr.course ? enr.course.teacher : enr.instructor,
-            progress: 0,
-            totalModules: 10,
-            completedModules: 0,
-            lastAccessed: 'Just now',
-            imageUrl: (enr.course && enr.course.imageUrl) ? enr.course.imageUrl : 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=500&q=80'
-          }));
+          const mappedEnrollments = approvedOnlyEnrollments.map(enr => {
+            const cId = enr.course ? enr.course.id : enr.id;
+            const cTitle = enr.course ? enr.course.title : enr.title;
+            const matchedAc = adminApproved.find(ac => 
+              String(ac.id) === String(cId) || 
+              (ac.title && cTitle && ac.title.trim().toLowerCase() === cTitle.trim().toLowerCase())
+            );
+
+            return {
+              id: cId,
+              title: matchedAc ? matchedAc.title : cTitle,
+              instructor: matchedAc?.teacher || matchedAc?.teacherName || (enr.course ? enr.course.teacher : enr.instructor) || 'Assigned Faculty',
+              progress: enr.progress || 0,
+              totalModules: matchedAc?.modules?.length || 10,
+              completedModules: 0,
+              lastAccessed: 'Just now',
+              imageUrl: matchedAc?.imageUrl || (enr.course && enr.course.imageUrl) || 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=500&q=80'
+            };
+          });
           setEnrolledCourses(mappedEnrollments);
           setIsNewUser(false);
         } else {
+          setEnrolledCourses([]);
           setIsNewUser(true);
         }
         setLoading(false);

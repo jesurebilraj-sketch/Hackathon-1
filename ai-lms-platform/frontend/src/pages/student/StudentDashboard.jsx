@@ -45,8 +45,8 @@ const StudentDashboard = () => {
       for (const enr of combined) {
         const courseObj = enr.course || enr;
         const matchingApproved = approvedList.find(c => 
-          c.id === courseObj.id || 
-          c.title?.toLowerCase() === courseObj.title?.toLowerCase()
+          String(c.id) === String(courseObj.id) || 
+          (c.title && courseObj.title && c.title.trim().toLowerCase() === courseObj.title.trim().toLowerCase())
         );
         if (matchingApproved) {
           // Attach approved course details (instructor, modules, etc.)
