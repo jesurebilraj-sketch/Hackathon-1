@@ -265,3 +265,4 @@ const TeacherCourses = () => {
 };
 
 export default TeacherCourses;
+

@@ -58,7 +58,41 @@ const AdminCourses = () => {
       localStorage.setItem('approvedCourses', JSON.stringify(currentApproved));
     }
 
-    setSuccessMsg(`Course "${request.title}" has been approved! It is now live in Available Courses.`);
+    // 3. Automatically register the teacher's specified default timetable slots!
+    if (request.defaultTimetable) {
+      const dt = request.defaultTimetable;
+      const currentTimetables = JSON.parse(localStorage.getItem('courseTimetables') || '[]');
+      
+      // Lecture slot (< 6 PM)
+      currentTimetables.push({
+        id: Date.now(),
+        courseId: request.id,
+        courseTitle: request.title,
+        sessionType: 'class',
+        day: dt.day || 'Monday',
+        startTime: dt.lectureStart || '10:00',
+        endTime: dt.lectureEnd || '11:30',
+        room: dt.room || 'Lecture Hall A',
+        instructor: request.teacherName || 'Faculty Member'
+      });
+
+      // Practice lab slot (> 6:30 PM)
+      currentTimetables.push({
+        id: Date.now() + 1,
+        courseId: request.id,
+        courseTitle: request.title,
+        sessionType: 'practice',
+        day: dt.day || 'Monday',
+        startTime: dt.practiceStart || '19:00',
+        endTime: dt.practiceEnd || '20:30',
+        room: dt.room || 'Virtual Code Lab',
+        instructor: request.teacherName || 'Faculty Member'
+      });
+
+      localStorage.setItem('courseTimetables', JSON.stringify(currentTimetables));
+    }
+
+    setSuccessMsg(`Course "${request.title}" and its default timetable have been approved! It is now live.`);
     loadData();
     setTimeout(() => setSuccessMsg(''), 3000);
   };
@@ -208,6 +242,30 @@ const AdminCourses = () => {
                         </>
                       )}
                     </div>
+
+                    {req.defaultTimetable && (
+                      <div className="mt-2 p-2.5 bg-indigo-50 border border-indigo-100 rounded-lg text-xs flex flex-wrap items-center gap-3 text-indigo-900">
+                        <span className="font-bold flex items-center gap-1 text-indigo-700">
+                          <Calendar size={13} /> Proposed Default Timetable:
+                        </span>
+                        <span className="bg-white px-2 py-0.5 rounded border border-indigo-200 font-medium">
+                          {req.defaultTimetable.day}
+                        </span>
+                        <span>
+                          Lecture: <strong>{req.defaultTimetable.lectureStart} - {req.defaultTimetable.lectureEnd}</strong> (&lt; 6:00 PM)
+                        </span>
+                        <span>•</span>
+                        <span>
+                          Practice / Lab: <strong>{req.defaultTimetable.practiceStart} - {req.defaultTimetable.practiceEnd}</strong> (&gt; 6:30 PM)
+                        </span>
+                        {req.defaultTimetable.room && (
+                          <>
+                            <span>•</span>
+                            <span className="text-gray-600">Room: {req.defaultTimetable.room}</span>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-3 shrink-0">
@@ -407,6 +465,20 @@ const AdminCourses = () => {
                 <p className="text-xs text-blue-600 font-medium">{viewingCourse.category} • Instructor: {viewingCourse.teacherName}</p>
               </div>
               <p className="text-sm text-gray-600">{viewingCourse.description}</p>
+
+              {viewingCourse.defaultTimetable && (
+                <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-lg text-xs space-y-1">
+                  <h4 className="font-bold text-indigo-900 flex items-center gap-1.5">
+                    <Calendar size={14} /> Teacher Proposed Timetable:
+                  </h4>
+                  <p className="text-gray-700"><strong>Day:</strong> {viewingCourse.defaultTimetable.day}</p>
+                  <p className="text-gray-700"><strong>Regular Lecture:</strong> {viewingCourse.defaultTimetable.lectureStart} - {viewingCourse.defaultTimetable.lectureEnd} (Before 6:00 PM)</p>
+                  <p className="text-gray-700"><strong>Practice Session:</strong> {viewingCourse.defaultTimetable.practiceStart} - {viewingCourse.defaultTimetable.practiceEnd} (After 6:30 PM)</p>
+                  {viewingCourse.defaultTimetable.room && (
+                    <p className="text-gray-700"><strong>Room / Hall:</strong> {viewingCourse.defaultTimetable.room}</p>
+                  )}
+                </div>
+              )}
 
               {viewingCourse.modules && viewingCourse.modules.length > 0 && (
                 <div>
