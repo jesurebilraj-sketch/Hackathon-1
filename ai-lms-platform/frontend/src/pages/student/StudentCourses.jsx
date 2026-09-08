@@ -9,15 +9,6 @@ const StudentCourses = () => {
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fallback Mock Data
-
-  const mockAvailableCourses = [
-    { id: 101, title: 'Advanced React Patterns', category: 'Web Development', imageUrl: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=500&q=80' },
-    { id: 102, title: 'Calculus I', category: 'Mathematics', imageUrl: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=500&q=80' },
-    { id: 103, title: 'World History: 20th Century', category: 'History', imageUrl: 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?w=500&q=80' },
-    { id: 104, title: 'Physics for Engineers', category: 'Science', imageUrl: 'https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?w=500&q=80' },
-  ];
-
   React.useEffect(() => {
     const fetchData = async () => {
       let apiEnrollments = [];
@@ -27,35 +18,9 @@ const StudentCourses = () => {
       try {
         const { api } = await import('../../services/api');
         
-        // Fetch all available courses from backend or fallback
-        let baseCourses = [];
-        const coursesData = await api.getAllCourses();
-        if (coursesData.courses && coursesData.courses.length > 0) {
-          baseCourses = coursesData.courses.map(c => ({
-            id: c.id,
-            title: c.title,
-            category: c.category || 'General',
-            imageUrl: c.imageUrl || 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=500&q=80'
-          }));
-        } else {
-          baseCourses = mockAvailableCourses;
-        }
-
-        // Merge courses approved by Administrator!
+        // Strictly load Administrator-Approved courses
         const adminApproved = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
-        const mergedAvailable = [...baseCourses];
-        for (const approved of adminApproved) {
-          if (!mergedAvailable.some(c => c.id === approved.id || c.title === approved.title)) {
-            mergedAvailable.push({
-              id: approved.id,
-              title: approved.title,
-              category: approved.category || 'General',
-              imageUrl: approved.imageUrl || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&q=80',
-              isApprovedByAdmin: true
-            });
-          }
-        }
-        setAvailableCourses(mergedAvailable);
+        setAvailableCourses(adminApproved);
 
         // Fetch user enrollments dynamically
         const enrollmentsData = await api.getStudentEnrollments(studentId);
@@ -63,9 +28,9 @@ const StudentCourses = () => {
           apiEnrollments = enrollmentsData.enrollments;
         }
       } catch (error) {
-        console.warn("Backend API unavailable, using mock data.", error);
+        console.warn("Backend API unavailable, using local approved courses.", error);
         const adminApproved = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
-        setAvailableCourses([...mockAvailableCourses, ...adminApproved]);
+        setAvailableCourses(adminApproved);
       } finally {
         const mockLocalEnrollments = JSON.parse(localStorage.getItem(`mockEnrollments_${userEmail}`) || '[]');
         const combinedEnrollments = [...apiEnrollments, ...mockLocalEnrollments];
@@ -210,31 +175,52 @@ const StudentCourses = () => {
 
       {/* Available Courses */}
       <div>
-        <h3 className="text-xl font-bold text-gray-900 mb-6">Trending Courses</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {availableCourses.map(course => (
-            <div key={course.id} className="group bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow flex flex-col">
-              <div className="h-32 w-full overflow-hidden bg-gray-100">
-                <img src={course.imageUrl} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-              </div>
-              <div className="p-5 flex flex-col flex-1">
-                <span 
-                  onClick={() => navigate(`/student/courses/category/${encodeURIComponent(course.category)}`)}
-                  className="text-xs font-semibold text-blue-600 tracking-wider uppercase mb-2 cursor-pointer hover:underline"
-                >
-                  {course.category}
-                </span>
-                <h4 className="font-bold text-gray-900 mb-4 flex-1 cursor-pointer hover:text-blue-600 transition-colors">{course.title}</h4>
-                <button 
-                  onClick={() => navigate(`/student/courses/${course.id}/teachers`)}
-                  className="w-full py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:border-blue-300 transition-colors cursor-pointer"
-                >
-                  Register Course
-                </button>
-              </div>
-            </div>
-          ))}
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-gray-900">Trending Courses</h3>
+          <span className="text-xs font-semibold px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">
+            Admin Approved Catalog ({availableCourses.length})
+          </span>
         </div>
+        
+        {availableCourses.length === 0 ? (
+          <div className="bg-white border border-gray-200 rounded-xl p-8 text-center text-gray-500">
+            <BookOpen size={32} className="mx-auto mb-2 text-gray-400" />
+            <p className="font-semibold text-gray-700">No Approved Courses Available Yet</p>
+            <p className="text-xs text-gray-500 mt-1 max-w-md mx-auto">
+              Only courses verified and approved by the academic administrator appear in this catalog. Courses submitted by teachers will appear here as soon as they are approved.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {availableCourses.map(course => (
+              <div key={course.id} className="group bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow flex flex-col">
+                <div className="h-32 w-full overflow-hidden bg-gray-100">
+                  <img src={course.imageUrl} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                </div>
+                <div className="p-5 flex flex-col flex-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <span 
+                      onClick={() => navigate(`/student/courses/category/${encodeURIComponent(course.category)}`)}
+                      className="text-xs font-semibold text-blue-600 tracking-wider uppercase cursor-pointer hover:underline"
+                    >
+                      {course.category}
+                    </span>
+                    <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
+                      Approved
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-gray-900 mb-4 flex-1 cursor-pointer hover:text-blue-600 transition-colors">{course.title}</h4>
+                  <button 
+                    onClick={() => navigate(`/student/courses/${course.id}/teachers`)}
+                    className="w-full py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:border-blue-300 transition-colors cursor-pointer"
+                  >
+                    Register Course
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

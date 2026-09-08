@@ -35,7 +35,7 @@ const AdminDashboard = () => {
 
     // 4. Approved / Available Courses
     const approved = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
-    setActiveCoursesCount(4 + approved.length);
+    setActiveCoursesCount(approved.length);
 
     // 5. Load Timetables
     const savedTimetables = JSON.parse(localStorage.getItem('courseTimetables') || '[]');

@@ -126,14 +126,27 @@ const CourseTeachers = () => {
       
       // Save a mock enrollment to localStorage scoped to this user
       const mockEnrollments = JSON.parse(localStorage.getItem(`mockEnrollments_${userEmail}`) || '[]');
-      if (!mockEnrollments.find(e => e.course.id == id)) {
+      if (!mockEnrollments.find(e => (e.course?.id == id || e.id == id))) {
+        // Resolve course details from approved courses
+        const approvedCourses = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
+        const matchedCourse = approvedCourses.find(c => c.id == id) || {
+          id: id,
+          title: `Course #${id}`,
+          category: 'General',
+          modules: []
+        };
+
+        const resolvedTitle = matchedCourse.title || `Course #${id}`;
+        const resolvedCategory = matchedCourse.category || 'General';
+
         mockEnrollments.push({
           enrollment_id: Date.now(),
           course: {
             id: id,
-            title: `Enrolled Course #${id}`,
-            category: 'AI Generated',
-            teacher: selectedTeacher.name
+            title: resolvedTitle,
+            category: resolvedCategory,
+            teacher: selectedTeacher.name,
+            modules: matchedCourse.modules || []
           }
         });
         localStorage.setItem(`mockEnrollments_${userEmail}`, JSON.stringify(mockEnrollments));
@@ -146,10 +159,10 @@ const CourseTeachers = () => {
           id: studentId,
           name: userName,
           email: userEmail,
-          course: `Enrolled Course #${id}`,
+          course: resolvedTitle,
           progress: 0,
           lastActive: 'Just now',
-          modules: []
+          modules: matchedCourse.modules || []
         });
         localStorage.setItem(teacherStudentsKey, JSON.stringify(mockTeacherStudents));
       }
