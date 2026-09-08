@@ -6,6 +6,7 @@ import Register from '../pages/auth/Register';
 
 // Teacher Pages
 import TeacherDashboard from '../pages/teacher/TeacherDashboard';
+import TeacherCourses from '../pages/teacher/TeacherCourses';
 import CreateCourse from '../pages/teacher/CreateCourse';
 import CourseBuilder from '../pages/teacher/CourseBuilder';
 import TeacherStudents from '../pages/teacher/TeacherStudents';
@@ -37,7 +38,7 @@ const AppRoutes = () => {
         {/* Protected Teacher Routes */}
         <Route path="/teacher" element={<DashboardLayout role="teacher" />}>
           <Route path="dashboard" element={<TeacherDashboard />} />
-          <Route path="courses" element={<Placeholder title="My Courses" />} />
+          <Route path="courses" element={<TeacherCourses />} />
           <Route path="timetable" element={<TeacherTimetable />} />
           <Route path="create-course" element={<CreateCourse />} />
           <Route path="courses/:id/builder" element={<CourseBuilder />} />
