@@ -55,7 +55,17 @@ const StudentCourses = () => {
         setLoading(false);
       }
     };
+
     fetchData();
+
+    const handleUpdate = () => fetchData();
+    window.addEventListener('storage', handleUpdate);
+    window.addEventListener('approvedCoursesUpdated', handleUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleUpdate);
+      window.removeEventListener('approvedCoursesUpdated', handleUpdate);
+    };
   }, []);
 
   return (
