@@ -14,81 +14,15 @@ const TeacherCourses = () => {
   const userEmail = localStorage.getItem('userEmail') || 'teacher@lms.edu';
   const teacherId = localStorage.getItem('teacherId') || '1';
 
-  // Base catalog of known courses
-  const defaultCourses = [
-    {
-      id: 101,
-      title: 'Advanced React Patterns',
-      category: 'Web Development',
-      instructor: 'Dr. Alan Turing',
-      teacherEmail: 'alan.turing@lms.edu',
-      description: 'Master higher-order components, custom hooks, and state machines in React.',
-      imageUrl: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=500&q=80',
-      modules: 8,
-      lessons: 32,
-      status: 'Live & Approved'
-    },
-    {
-      id: 102,
-      title: 'Calculus I',
-      category: 'Mathematics',
-      instructor: 'Dr. Ada Lovelace',
-      teacherEmail: 'ada.lovelace@lms.edu',
-      description: 'Differential and integral calculus with rigorous applications in physics and computation.',
-      imageUrl: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=500&q=80',
-      modules: 10,
-      lessons: 40,
-      status: 'Live & Approved'
-    },
-    {
-      id: 103,
-      title: 'Software Engineering & Clean Architecture',
-      category: 'Software Engineering',
-      instructor: 'Prof. Grace Hopper',
-      teacherEmail: 'grace.hopper@lms.edu',
-      description: 'Enterprise design patterns, CI/CD pipelines, and robust modular architectures.',
-      imageUrl: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=500&q=80',
-      modules: 7,
-      lessons: 28,
-      status: 'Live & Approved'
-    },
-    {
-      id: 104,
-      title: 'Python Programming',
-      category: 'Computer Science',
-      instructor: 'Dr. Alan Turing',
-      teacherEmail: 'alan.turing@lms.edu',
-      description: 'Comprehensive Python mastery from basic scripting to asynchronous microservices.',
-      imageUrl: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=500&q=80',
-      modules: 9,
-      lessons: 36,
-      status: 'Live & Approved'
-    },
-    {
-      id: 105,
-      title: 'Data Structures & Algorithms',
-      category: 'Computer Science',
-      instructor: 'Prof. Grace Hopper',
-      teacherEmail: 'grace.hopper@lms.edu',
-      description: 'Deep dive into binary trees, graph algorithms, dynamic programming, and complexity.',
-      imageUrl: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=500&q=80',
-      modules: 6,
-      lessons: 24,
-      status: 'Live & Approved'
-    }
-  ];
-
   useEffect(() => {
-    // 1. Load approved courses from localStorage
+    // 1. Load approved courses strictly from administrator-approved courses
     const storedApproved = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
     // 2. Load pending courses from this teacher
     const storedPending = JSON.parse(localStorage.getItem('pendingCourseRequests') || '[]');
 
-    const allApprovedCatalog = [...defaultCourses, ...storedApproved];
-
     // Filter approved courses strictly handled by this logged-in teacher
     const lastName = userName.split(' ').pop();
-    const handledApproved = allApprovedCatalog.filter(c => {
+    const handledApproved = storedApproved.filter(c => {
       if (c.teacherEmail && c.teacherEmail.toLowerCase() === userEmail.toLowerCase()) return true;
       if (c.instructor && (c.instructor === userName || c.instructor.includes(lastName))) return true;
       if (c.teacher && (c.teacher === userName || c.teacher.includes(lastName))) return true;

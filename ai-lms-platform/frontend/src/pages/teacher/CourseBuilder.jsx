@@ -11,24 +11,15 @@ const CourseBuilder = () => {
   const [isApproved, setIsApproved] = useState(false);
 
   useEffect(() => {
-    // 1. Check if course is in approvedCourses or base approved catalog
-    const baseCatalog = [
-      { id: 101, title: 'Advanced React Patterns', category: 'Web Development', description: 'Master higher-order components, custom hooks, and state machines in React.' },
-      { id: 102, title: 'Calculus I', category: 'Mathematics', description: 'Differential and integral calculus with rigorous applications in physics and computation.' },
-      { id: 103, title: 'Software Engineering & Clean Architecture', category: 'Software Engineering', description: 'Enterprise design patterns, CI/CD pipelines, and robust modular architectures.' },
-      { id: 104, title: 'Python Programming', category: 'Computer Science', description: 'Comprehensive Python mastery from basic scripting to asynchronous microservices.' },
-      { id: 105, title: 'Data Structures & Algorithms', category: 'Computer Science', description: 'Deep dive into binary trees, graph algorithms, dynamic programming, and complexity.' }
-    ];
-
+    // 1. Check if course is strictly in approvedCourses
     const approved = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
-    const allApproved = [...baseCatalog, ...approved];
     const pending = JSON.parse(localStorage.getItem('pendingCourseRequests') || '[]');
     
-    let foundCourse = allApproved.find(c => c.id.toString() === id?.toString() || c.title?.toLowerCase() === id?.toString().toLowerCase());
+    let foundCourse = approved.find(c => String(c.id) === String(id) || (c.title && id && c.title.trim().toLowerCase() === id.toString().trim().toLowerCase()));
     if (foundCourse) {
       setIsApproved(true);
     } else {
-      foundCourse = pending.find(c => c.id.toString() === id?.toString() || c.title?.toLowerCase() === id?.toString().toLowerCase());
+      foundCourse = pending.find(c => String(c.id) === String(id) || (c.title && id && c.title.trim().toLowerCase() === id.toString().trim().toLowerCase()));
       setIsApproved(false);
     }
 
