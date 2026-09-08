@@ -182,7 +182,8 @@ const TeacherCourses = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {courses.map((course) => {
-            const enrolled = studentCounts[course.title] || (course.id === 101 ? 75 : course.id === 104 ? 42 : 12);
+            const enrolled = studentCounts[course.title] || 0;
+            const moduleCount = Array.isArray(course.modules) ? course.modules.length : (course.modules || 0);
             const slots = courseTimetables.filter(t => t.courseTitle === course.title);
 
             return (
@@ -216,11 +217,11 @@ const TeacherCourses = () => {
                     <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100 text-xs text-gray-600">
                       <div className="flex items-center gap-1.5 font-medium">
                         <Users size={14} className="text-blue-500" />
-                        <span>{enrolled} Enrolled</span>
+                        <span>{enrolled} Student{enrolled === 1 ? '' : 's'}</span>
                       </div>
                       <div className="flex items-center gap-1.5 font-medium">
                         <Layers size={14} className="text-indigo-500" />
-                        <span>{course.modules} Modules</span>
+                        <span>{moduleCount} Module{moduleCount === 1 ? '' : 's'}</span>
                       </div>
                     </div>
 
@@ -249,7 +250,7 @@ const TeacherCourses = () => {
                     <Clock size={14} /> Adjust Schedule
                   </button>
                   <button
-                    onClick={() => navigate('/teacher/courses/1/builder')}
+                    onClick={() => navigate(`/teacher/courses/${course.id}/builder`)}
                     className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                   >
                     View Curriculum

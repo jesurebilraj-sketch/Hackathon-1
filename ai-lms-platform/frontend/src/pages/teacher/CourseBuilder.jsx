@@ -1,37 +1,79 @@
-import React, { useState } from 'react';
-import { Settings, Plus, CheckCircle, GripVertical, Clock, Calendar, AlertCircle, X, Sun, Moon } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Settings, Plus, CheckCircle, GripVertical, Clock, Calendar, AlertCircle, X, Sun, Moon, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const CourseBuilder = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const [showTimetableModal, setShowTimetableModal] = useState(false);
   const [error, setError] = useState('');
+  const [course, setCourse] = useState(null);
+  const [isApproved, setIsApproved] = useState(false);
 
-  const mockCourse = {
-    title: 'Python Programming',
-    description: 'Learn Python from fundamentals to advanced concepts.',
-    modules: [
-      {
-        id: 1,
-        title: 'Python Fundamentals',
-        lessons: [
-          'Introduction to Python',
-          'Variables',
-          'Data Types',
-          'Operators'
+  useEffect(() => {
+    // 1. Check if course is in approvedCourses
+    const approved = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
+    const pending = JSON.parse(localStorage.getItem('pendingCourseRequests') || '[]');
+    
+    let foundCourse = approved.find(c => c.id.toString() === id?.toString());
+    if (foundCourse) {
+      setIsApproved(true);
+    } else {
+      foundCourse = pending.find(c => c.id.toString() === id?.toString());
+      setIsApproved(false);
+    }
+
+    // Default template if creating a fresh course or if not found
+    if (!foundCourse) {
+      foundCourse = {
+        id: id || Date.now(),
+        title: 'Python Programming',
+        description: 'Learn Python from fundamentals to advanced concepts.',
+        category: 'Computer Science',
+        modules: [
+          {
+            id: 1,
+            title: 'Python Fundamentals',
+            lessons: [
+              'Introduction to Python',
+              'Variables',
+              'Data Types',
+              'Operators'
+            ]
+          },
+          {
+            id: 2,
+            title: 'Control Flow',
+            lessons: [
+              'Conditions',
+              'Loops',
+              'Functions'
+            ]
+          }
         ]
-      },
-      {
-        id: 2,
-        title: 'Control Flow',
-        lessons: [
-          'Conditions',
-          'Loops',
-          'Functions'
-        ]
-      }
-    ]
-  };
+      };
+    }
+
+    // Ensure modules has structure
+    if (!foundCourse.modules || foundCourse.modules.length === 0) {
+      foundCourse.modules = [
+        {
+          id: 1,
+          title: 'Module 1: Foundations',
+          lessons: ['Introduction & Setup', 'Core Concepts', 'Syntactic Overview']
+        },
+        {
+          id: 2,
+          title: 'Module 2: Applied Techniques',
+          lessons: ['Patterns & Practices', 'Debugging', 'Capstone Challenge']
+        }
+      ];
+    }
+
+    setCourse(foundCourse);
+  }, [id]);
+
+  if (!course) return null;
 
   const handleConfirmSubmission = (e) => {
     e.preventDefault();
@@ -85,16 +127,16 @@ const CourseBuilder = () => {
     const teacherEmail = localStorage.getItem('userEmail') || 'teacher@lms.edu';
     
     const newRequest = {
-      id: Date.now(),
-      title: mockCourse.title,
-      description: mockCourse.description,
-      category: 'Computer Science',
+      id: course.id || Date.now(),
+      title: course.title,
+      description: course.description,
+      category: course.category || 'Computer Science',
       teacherName,
       teacherEmail,
       status: 'pending',
       createdAt: new Date().toISOString(),
-      modules: mockCourse.modules,
-      imageUrl: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=500&q=80',
+      modules: course.modules,
+      imageUrl: course.imageUrl || 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=500&q=80',
       defaultTimetable: {
         day,
         lectureStart,
@@ -113,40 +155,67 @@ const CourseBuilder = () => {
 
     setShowTimetableModal(false);
     alert('Course with default timetable schedule has been submitted to the Administrator for approval!');
-    navigate('/teacher/dashboard');
+    navigate('/teacher/courses');
   };
 
   return (
     <div className="max-w-4xl mx-auto pb-12">
-      <div className="flex justify-between items-end mb-8">
+      <button 
+        onClick={() => navigate('/teacher/courses')}
+        className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-blue-600 mb-6 transition-colors cursor-pointer"
+      >
+        <ArrowLeft size={16} /> Back to My Courses
+      </button>
+
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
         <div>
-          <p className="text-sm font-medium text-blue-600 mb-1">Course Builder</p>
-          <h1 className="text-3xl font-bold text-gray-900">{mockCourse.title}</h1>
-          <p className="text-gray-600 mt-2">{mockCourse.description}</p>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm font-medium text-blue-600">Course Builder & Curriculum</span>
+            {isApproved ? (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                <ShieldCheck size={12} /> Approved & Live in Catalog
+              </span>
+            ) : (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                Pending / Draft
+              </span>
+            )}
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900">{course.title}</h1>
+          <p className="text-gray-600 mt-2">{course.description}</p>
         </div>
-        <div className="flex gap-3">
-          <button 
-            onClick={() => { alert('Draft saved locally.'); navigate('/teacher/dashboard'); }}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 cursor-pointer"
-          >
-            Save Draft
-          </button>
-          <button 
-            onClick={() => setShowTimetableModal(true)}
-            className="px-5 py-2 bg-blue-600 text-white rounded-md text-sm font-bold hover:bg-blue-700 shadow-sm cursor-pointer flex items-center gap-2"
-          >
-            <Clock size={16} /> Submit for Admin Approval
-          </button>
+
+        <div className="flex items-center gap-3">
+          {isApproved ? (
+            <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-semibold">
+              <CheckCircle size={16} className="text-emerald-600" /> Published by Academic Admin
+            </div>
+          ) : (
+            <>
+              <button 
+                onClick={() => { alert('Draft saved locally.'); navigate('/teacher/courses'); }}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 cursor-pointer"
+              >
+                Save Draft
+              </button>
+              <button 
+                onClick={() => setShowTimetableModal(true)}
+                className="px-5 py-2 bg-blue-600 text-white rounded-md text-sm font-bold hover:bg-blue-700 shadow-sm cursor-pointer flex items-center gap-2"
+              >
+                <Clock size={16} /> Submit for Admin Approval
+              </button>
+            </>
+          )}
         </div>
       </div>
 
       <div className="space-y-6">
-        {mockCourse.modules.map((module, mIndex) => (
-          <div key={module.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+        {course.modules.map((module, mIndex) => (
+          <div key={module.id || mIndex} className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
             <div className="bg-gray-50 border-b border-gray-200 px-6 py-4 flex items-center justify-between">
               <div>
                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Module {mIndex + 1}</span>
-                <h3 className="text-lg font-bold text-gray-900">{module.title}</h3>
+                <h3 className="text-lg font-bold text-gray-900">{module.title || module.name || `Module ${mIndex + 1}`}</h3>
               </div>
               <button className="text-gray-400 hover:text-gray-600">
                 <Settings size={18} />
@@ -154,7 +223,7 @@ const CourseBuilder = () => {
             </div>
             
             <div className="p-2">
-              {module.lessons.map((lesson, lIndex) => (
+              {(module.lessons || ['Introduction', 'Core Architecture', 'Practice Assignment']).map((lesson, lIndex) => (
                 <div key={lIndex} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg group">
                   <GripVertical size={16} className="text-gray-300 cursor-grab" />
                   <CheckCircle size={16} className="text-emerald-500" />
@@ -175,9 +244,11 @@ const CourseBuilder = () => {
           </div>
         ))}
 
-        <button className="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 font-medium hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors flex items-center justify-center gap-2">
-          <Plus size={20} /> Add Module
-        </button>
+        {!isApproved && (
+          <button className="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 font-medium hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors flex items-center justify-center gap-2 cursor-pointer">
+            <Plus size={20} /> Add Module
+          </button>
+        )}
       </div>
 
       {/* Default Timetable Specification Modal (Mandatory before Admin submission) */}

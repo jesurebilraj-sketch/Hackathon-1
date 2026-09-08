@@ -12,17 +12,49 @@ const TeacherDashboard = () => {
   const totalStudents = teacherStats[teacherId] || 0;
 
   const [mySlots, setMySlots] = useState([]);
+  const [activeCoursesCount, setActiveCoursesCount] = useState(0);
+  const [actualStudentCount, setActualStudentCount] = useState(0);
 
   useEffect(() => {
+    // 1. Timetable
     const allTimetables = JSON.parse(localStorage.getItem('courseTimetables') || '[]');
+    const lastName = userName.split(' ').pop();
     const filtered = allTimetables.filter(slot => {
       if (slot.instructor === userName) return true;
       if (slot.teacherId && slot.teacherId.toString() === teacherId.toString()) return true;
-      const lastName = userName.split(' ').pop();
       return slot.instructor && slot.instructor.includes(lastName);
     });
     setMySlots(filtered);
-  }, [userName, teacherId]);
+
+    // 2. Real Active Courses Handled by this teacher
+    const approved = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
+    const myCourses = approved.filter(c => {
+      if (c.teacherEmail && c.teacherEmail.toLowerCase() === userEmail.toLowerCase()) return true;
+      if (c.instructor && (c.instructor === userName || c.instructor.includes(lastName))) return true;
+      if (c.teacher && (c.teacher === userName || c.teacher.includes(lastName))) return true;
+      return false;
+    });
+    setActiveCoursesCount(myCourses.length);
+
+    // 3. Real Student Count enrolled in this teacher's courses
+    let uniqueStudents = new Set();
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('mockEnrollments_')) {
+        const studentEmail = key.replace('mockEnrollments_', '');
+        try {
+          const enrs = JSON.parse(localStorage.getItem(key) || '[]');
+          for (const enr of enrs) {
+            const courseObj = enr.course || enr;
+            if (myCourses.some(mc => mc.id === courseObj.id || mc.title === courseObj.title)) {
+              uniqueStudents.add(studentEmail);
+            }
+          }
+        } catch (e) {}
+      }
+    }
+    setActualStudentCount(uniqueStudents.size);
+  }, [userName, userEmail, teacherId]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
@@ -59,7 +91,7 @@ const TeacherDashboard = () => {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-gray-900">Active Courses</h3>
-            <p className="text-3xl font-bold mt-2">4</p>
+            <p className="text-3xl font-bold mt-2">{activeCoursesCount}</p>
           </div>
         </div>
 
@@ -69,7 +101,7 @@ const TeacherDashboard = () => {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-gray-900">Total Students</h3>
-            <p className="text-3xl font-bold mt-2">{totalStudents}</p>
+            <p className="text-3xl font-bold mt-2">{actualStudentCount}</p>
           </div>
         </div>
       </div>
