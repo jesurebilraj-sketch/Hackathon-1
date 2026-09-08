@@ -5,6 +5,7 @@ import { Upload, BookOpen, Users, Clock, Calendar, ArrowRight, Sun, Moon, Slider
 const TeacherDashboard = () => {
   const navigate = useNavigate();
   const userName = localStorage.getItem('userName') || 'Professor';
+  const userEmail = localStorage.getItem('userEmail') || '';
   const teacherId = localStorage.getItem('teacherId') || '1';
   
   const savedStats = localStorage.getItem('teacherStats');
