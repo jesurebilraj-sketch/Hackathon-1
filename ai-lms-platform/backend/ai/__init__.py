@@ -21,6 +21,13 @@ from .lesson_generator import (
     generate_lesson_content,
     generate_grounded_fallback_lesson,
 )
+from .tutor import (
+    TutorCitation,
+    TutorResponse,
+    ask_tutor,
+    build_grounded_tutor_prompt,
+    generate_grounded_fallback_answer,
+)
 
 __all__ = [
     "LessonStructure",
@@ -39,4 +46,9 @@ __all__ = [
     "LessonGenerationError",
     "generate_lesson_content",
     "generate_grounded_fallback_lesson",
+    "TutorCitation",
+    "TutorResponse",
+    "ask_tutor",
+    "build_grounded_tutor_prompt",
+    "generate_grounded_fallback_answer",
 ]

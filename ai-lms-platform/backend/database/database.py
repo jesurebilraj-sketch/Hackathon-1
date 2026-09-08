@@ -71,6 +71,20 @@ def migrate_schema(eng):
     try:
         inspector = inspect(eng)
         table_names = inspector.get_table_names()
+
+        if "courses" in table_names:
+            existing_course_cols = {col["name"] for col in inspector.get_columns("courses")}
+            with eng.begin() as conn:
+                if "category" not in existing_course_cols:
+                    logger.info("Migrating schema: adding 'category' to 'courses' table.")
+                    conn.execute(text("ALTER TABLE courses ADD COLUMN category VARCHAR(100) DEFAULT 'General'"))
+                if "image_url" not in existing_course_cols:
+                    logger.info("Migrating schema: adding 'image_url' to 'courses' table.")
+                    conn.execute(text("ALTER TABLE courses ADD COLUMN image_url VARCHAR(512) DEFAULT NULL"))
+                if "source_file" not in existing_course_cols:
+                    logger.info("Migrating schema: adding 'source_file' to 'courses' table.")
+                    conn.execute(text("ALTER TABLE courses ADD COLUMN source_file VARCHAR(512) DEFAULT NULL"))
+
         if "lessons" in table_names:
             existing_columns = {col["name"] for col in inspector.get_columns("lessons")}
             with eng.begin() as conn:
@@ -159,7 +173,10 @@ def migrate_schema(eng):
 
 def init_db(target_engine=None):
     """Initializes all registered database tables and applies lightweight migrations."""
-    from . import models  # noqa: F401 - ensures all models are registered on Base.metadata
+    try:
+        from . import models  # noqa: F401 - ensures all models are registered on Base.metadata
+    except ImportError:
+        import database.models  # noqa: F401
     eng = target_engine or engine
     Base.metadata.create_all(bind=eng)
     migrate_schema(eng)
@@ -176,3 +193,8 @@ def check_db_connection(target_engine=None) -> dict:
     except Exception as exc:
         logger.warning("Database connection check failed: %s", exc)
         return {"status": "disconnected", "error": str(exc)}
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    init_db()

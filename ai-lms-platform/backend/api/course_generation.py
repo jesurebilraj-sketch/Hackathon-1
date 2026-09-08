@@ -12,6 +12,7 @@ from ai.course_generator import (
     CourseStructure,
     CourseGenerationError,
 )
+from vector import get_vector_store
 
 logger = logging.getLogger("lms.api.generation")
 
@@ -135,6 +136,16 @@ def generate_course_curriculum(course_id: int, db: Session = Depends(get_db)):
 
         db.commit()
         db.refresh(course)
+
+        # 7. Automatically build / update vector index for the course
+        try:
+            get_vector_store().replace_course_chunks(
+                course_id=course.id,
+                chunks=chunks,
+            )
+            logger.info("Indexed %d chunks into vector store for course %d", len(chunks), course.id)
+        except Exception as vec_exc:
+            logger.warning("Vector indexing notice for course %d: %s", course.id, vec_exc)
     except Exception as exc:
         db.rollback()
         logger.error("Failed to persist generated course to database: %s", exc)
