@@ -30,15 +30,21 @@ const Register = () => {
 
     // Role validation check
     const isLmsEdu = email.endsWith('@lms.edu');
+    const isAdminDomain = email.endsWith('@admin.lms.edu') || email === 'admin@lms.edu';
     
-    if (role === 'teacher') {
+    if (role === 'admin') {
+      if (!isAdminDomain) {
+        setError('Administrator registration requires an @admin.lms.edu or admin@lms.edu email.');
+        return;
+      }
+    } else if (role === 'teacher') {
       if (!isLmsEdu) {
         setError('Teacher emails must end with @lms.edu. Please use a valid institutional email.');
         return;
       }
     } else if (role === 'student') {
-      if (isLmsEdu) {
-        setError('Emails ending in @lms.edu are reserved for Teachers. Please select the Teacher registration portal.');
+      if (isLmsEdu || isAdminDomain) {
+        setError('Institutional emails (@lms.edu / @admin.lms.edu) are reserved for Faculty and Administrators. Please select the appropriate portal.');
         return;
       }
     }
@@ -46,8 +52,11 @@ const Register = () => {
     const name = e.target.name.value;
     localStorage.setItem('userName', name);
     localStorage.setItem('userEmail', email);
+    localStorage.setItem('userRole', role);
 
-    if (role === 'teacher') {
+    if (role === 'admin') {
+      navigate('/admin/dashboard');
+    } else if (role === 'teacher') {
       // Set a generic teacher ID for demo
       localStorage.setItem('teacherId', '1');
       navigate('/teacher/dashboard');
@@ -114,14 +123,18 @@ const Register = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Register As:</label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
+              <div className="grid grid-cols-3 gap-2">
+                <label className="flex items-center gap-1.5 cursor-pointer bg-gray-50 p-2.5 rounded-lg border border-gray-200 hover:bg-blue-50 transition-colors">
                   <input type="radio" name="role" value="student" checked={role === 'student'} onChange={(e) => setRole(e.target.value)} className="text-blue-600 focus:ring-blue-500" />
-                  <span className="text-sm text-gray-700">Student</span>
+                  <span className="text-xs sm:text-sm font-medium text-gray-700">Student</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="flex items-center gap-1.5 cursor-pointer bg-gray-50 p-2.5 rounded-lg border border-gray-200 hover:bg-blue-50 transition-colors">
                   <input type="radio" name="role" value="teacher" checked={role === 'teacher'} onChange={(e) => setRole(e.target.value)} className="text-blue-600 focus:ring-blue-500" />
-                  <span className="text-sm text-gray-700">Teacher</span>
+                  <span className="text-xs sm:text-sm font-medium text-gray-700">Teacher</span>
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer bg-gray-50 p-2.5 rounded-lg border border-gray-200 hover:bg-blue-50 transition-colors">
+                  <input type="radio" name="role" value="admin" checked={role === 'admin'} onChange={(e) => setRole(e.target.value)} className="text-blue-600 focus:ring-blue-500" />
+                  <span className="text-xs sm:text-sm font-medium text-gray-700">Administrator</span>
                 </label>
               </div>
             </div>

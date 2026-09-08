@@ -27,18 +27,35 @@ const StudentCourses = () => {
       try {
         const { api } = await import('../../services/api');
         
-        // Fetch all available courses
+        // Fetch all available courses from backend or fallback
+        let baseCourses = [];
         const coursesData = await api.getAllCourses();
         if (coursesData.courses && coursesData.courses.length > 0) {
-          setAvailableCourses(coursesData.courses.map(c => ({
+          baseCourses = coursesData.courses.map(c => ({
             id: c.id,
             title: c.title,
             category: c.category || 'General',
             imageUrl: c.imageUrl || 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=500&q=80'
-          })));
+          }));
         } else {
-          setAvailableCourses(mockAvailableCourses);
+          baseCourses = mockAvailableCourses;
         }
+
+        // Merge courses approved by Administrator!
+        const adminApproved = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
+        const mergedAvailable = [...baseCourses];
+        for (const approved of adminApproved) {
+          if (!mergedAvailable.some(c => c.id === approved.id || c.title === approved.title)) {
+            mergedAvailable.push({
+              id: approved.id,
+              title: approved.title,
+              category: approved.category || 'General',
+              imageUrl: approved.imageUrl || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&q=80',
+              isApprovedByAdmin: true
+            });
+          }
+        }
+        setAvailableCourses(mergedAvailable);
 
         // Fetch user enrollments dynamically
         const enrollmentsData = await api.getStudentEnrollments(studentId);
@@ -47,7 +64,8 @@ const StudentCourses = () => {
         }
       } catch (error) {
         console.warn("Backend API unavailable, using mock data.", error);
-        setAvailableCourses(mockAvailableCourses);
+        const adminApproved = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
+        setAvailableCourses([...mockAvailableCourses, ...adminApproved]);
       } finally {
         const mockLocalEnrollments = JSON.parse(localStorage.getItem(`mockEnrollments_${userEmail}`) || '[]');
         const combinedEnrollments = [...apiEnrollments, ...mockLocalEnrollments];
@@ -79,8 +97,19 @@ const StudentCourses = () => {
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Courses</h1>
-          <p className="text-gray-600 mt-1">Manage and track your enrolled courses.</p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-gray-900">My Courses</h1>
+            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+              enrolledCourses.length >= 5 
+                ? 'bg-red-100 text-red-700 border border-red-200' 
+                : 'bg-blue-50 text-blue-700 border border-blue-100'
+            }`}>
+              Capacity: {enrolledCourses.length} / 5 Max Courses
+            </span>
+          </div>
+          <p className="text-gray-600 mt-1">
+            Manage and track your enrolled courses. Institutional policy restricts students to 5 courses max.
+          </p>
         </div>
         
         {/* Demo Toggle - Just for hackathon presentation purposes */}

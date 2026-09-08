@@ -16,6 +16,12 @@ import StudentCourses from '../pages/student/StudentCourses';
 import CategoryCourses from '../pages/student/CategoryCourses';
 import CourseTeachers from '../pages/student/CourseTeachers';
 
+// Admin Pages
+import AdminDashboard from '../pages/admin/AdminDashboard';
+import AdminFaculty from '../pages/admin/AdminFaculty';
+import AdminCourses from '../pages/admin/AdminCourses';
+import AdminTimetable from '../pages/admin/AdminTimetable';
+
 // Common
 import Placeholder from '../components/common/Placeholder';
 
@@ -36,6 +42,15 @@ const AppRoutes = () => {
           <Route path="analytics" element={<Placeholder title="Course Analytics" />} />
           <Route path="students" element={<TeacherStudents />} />
           <Route path="settings" element={<Placeholder title="Teacher Settings" />} />
+        </Route>
+
+        {/* Protected Admin Routes */}
+        <Route path="/admin" element={<DashboardLayout role="admin" />}>
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="faculty" element={<AdminFaculty />} />
+          <Route path="courses" element={<AdminCourses />} />
+          <Route path="timetable" element={<AdminTimetable />} />
+          <Route path="settings" element={<Placeholder title="Administrator Settings" />} />
         </Route>
 
         {/* Protected Student Routes */}

@@ -14,7 +14,7 @@ const CourseTeachers = () => {
   });
 
   // Mock data for available teachers and their specific lesson plans
-  const availableTeachers = [
+  const defaultTeachers = [
     {
       id: 1,
       name: 'Dr. Alan Turing',
@@ -62,7 +62,43 @@ const CourseTeachers = () => {
     }
   ];
 
+  // Merge custom faculty added by Administrator
+  const customFaculty = JSON.parse(localStorage.getItem('customFacultyList') || '[]');
+  const mappedCustomFaculty = customFaculty.map(f => ({
+    id: f.id,
+    name: f.name,
+    email: f.email,
+    avatar: f.avatar,
+    rating: f.rating || 5.0,
+    students: teacherStats[f.id] || 0,
+    style: f.style || 'Interactive & Engaging',
+    schedule: [
+      { week: 1, title: 'Core Foundations', portions: ['Syllabus Overview', 'Key Principles', 'Initial Setup'] },
+      { week: 2, title: 'Deep Modules & Architecture', portions: ['Theoretical Framework', 'Core Implementation'] },
+      { week: 3, title: 'Applied Projects', portions: ['Industry Case Studies', 'Problem Sets'] },
+      { week: 4, title: 'Capstone & Evaluation', portions: ['Project Review', 'Final Comprehensive Evaluation'] }
+    ]
+  }));
+
+  const availableTeachers = [...defaultTeachers, ...mappedCustomFaculty];
+
+  // Calculate enrolled courses count for 5-course restriction
+  const userEmail = localStorage.getItem('userEmail') || 'default';
+  const studentLocalEnrollments = JSON.parse(localStorage.getItem(`mockEnrollments_${userEmail}`) || '[]');
+  const currentEnrollmentCount = studentLocalEnrollments.length;
+  const isLimitReached = currentEnrollmentCount >= 5;
+
+  // Load Course Timetables
+  const allTimetables = JSON.parse(localStorage.getItem('courseTimetables') || '[]');
+  const courseTimetable = allTimetables.filter(t => t.courseId == id || t.courseId === 101);
+
   const handleEnroll = async () => {
+    // 5-Course Limit Enforcement
+    if (isLimitReached) {
+      alert('Enrollment Limit Reached: Institutional academic policy restricts students to a maximum of 5 concurrent courses. You cannot enroll in additional courses.');
+      return;
+    }
+
     setEnrolling(true);
     const studentId = parseInt(localStorage.getItem('studentId') || '1');
     const userEmail = localStorage.getItem('userEmail') || 'default';
@@ -183,14 +219,61 @@ const CourseTeachers = () => {
                     <p className="text-blue-600 font-medium text-sm">{selectedTeacher.style}</p>
                   </div>
                 </div>
-                <button 
-                  onClick={handleEnroll}
-                  disabled={enrolling}
-                  className="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50"
-                >
-                  {enrolling ? 'Enrolling...' : 'Confirm Enrollment'}
-                </button>
+                <div className="flex flex-col items-end gap-2">
+                  <button 
+                    onClick={handleEnroll}
+                    disabled={enrolling || isLimitReached}
+                    className={`px-6 py-3 font-bold rounded-xl transition-colors shadow-sm cursor-pointer ${
+                      isLimitReached
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                  >
+                    {isLimitReached 
+                      ? 'Course Limit Reached (5/5)' 
+                      : enrolling 
+                        ? 'Enrolling...' 
+                        : 'Confirm Enrollment'}
+                  </button>
+                  {isLimitReached && (
+                    <span className="text-xs font-semibold text-red-600">
+                      Maximum 5 courses allowed per student
+                    </span>
+                  )}
+                </div>
               </div>
+
+              {/* Official Course Timetable configured by Administrator */}
+              {courseTimetable.length > 0 && (
+                <div className="mb-8 p-5 bg-gradient-to-r from-blue-50/70 to-purple-50/70 rounded-xl border border-blue-100">
+                  <h3 className="text-base font-bold text-gray-900 flex items-center gap-2 mb-3">
+                    <Clock className="text-blue-600" size={18} />
+                    Official Course Timetable & Practice Sessions
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {courseTimetable.map((slot) => (
+                      <div key={slot.id} className="p-3 bg-white rounded-lg border border-gray-200 text-xs shadow-2xs">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className={`px-2 py-0.5 rounded font-bold uppercase text-[10px] ${
+                            slot.sessionType === 'class' 
+                              ? 'bg-blue-100 text-blue-800' 
+                              : 'bg-purple-100 text-purple-800'
+                          }`}>
+                            {slot.sessionType === 'class' ? 'Lecture (< 6 PM)' : 'Practice Lab (> 6:30 PM)'}
+                          </span>
+                          <span className="font-semibold text-gray-700">{slot.day}</span>
+                        </div>
+                        <div className="font-bold text-gray-900 text-sm mt-1">
+                          {slot.startTime} – {slot.endTime}
+                        </div>
+                        <div className="text-gray-500 mt-0.5">
+                          Venue: <span className="text-gray-700">{slot.room}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-6">
                 <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">

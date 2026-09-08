@@ -1,8 +1,16 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { BookOpen, Calendar, LayoutDashboard, Settings, Users, BookMarked, LineChart } from 'lucide-react';
+import { BookOpen, Calendar, LayoutDashboard, Settings, Users, BookMarked, LineChart, ShieldCheck, CheckSquare, Clock } from 'lucide-react';
 
 const Sidebar = ({ role }) => {
+  const adminLinks = [
+    { name: 'Dashboard', path: '/admin/dashboard', icon: <LayoutDashboard size={20} /> },
+    { name: 'Faculty Management', path: '/admin/faculty', icon: <Users size={20} /> },
+    { name: 'Course Approvals', path: '/admin/courses', icon: <CheckSquare size={20} /> },
+    { name: 'Timetable & Schedule', path: '/admin/timetable', icon: <Clock size={20} /> },
+    { name: 'Settings', path: '/admin/settings', icon: <Settings size={20} /> },
+  ];
+
   const teacherLinks = [
     { name: 'Dashboard', path: '/teacher/dashboard', icon: <LayoutDashboard size={20} /> },
     { name: 'My Courses', path: '/teacher/courses', icon: <BookOpen size={20} /> },
@@ -21,7 +29,7 @@ const Sidebar = ({ role }) => {
     { name: 'Settings', path: '/student/settings', icon: <Settings size={20} /> },
   ];
 
-  const links = role === 'teacher' ? teacherLinks : studentLinks;
+  const links = role === 'admin' ? adminLinks : role === 'teacher' ? teacherLinks : studentLinks;
 
   return (
     <aside className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col">
