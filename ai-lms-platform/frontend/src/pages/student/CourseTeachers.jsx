@@ -89,7 +89,15 @@ const CourseTeachers = () => {
   const userEmail = localStorage.getItem('userEmail') || 'default';
   const studentLocalEnrollments = JSON.parse(localStorage.getItem(`mockEnrollments_${userEmail}`) || '[]');
   const currentEnrollmentCount = studentLocalEnrollments.length;
-  const isAlreadyEnrolled = studentLocalEnrollments.some(e => String(e.course?.id) === String(id) || String(e.id) === String(id));
+  
+  // Find active enrollment record for this specific course (if any)
+  const existingEnrollment = studentLocalEnrollments.find(e => 
+    String(e.course?.id) === String(id) || 
+    String(e.id) === String(id) ||
+    (course?.title && (e.course?.title || e.title) && (e.course?.title || e.title).trim().toLowerCase() === course.title.trim().toLowerCase())
+  );
+  const isAlreadyEnrolled = !!existingEnrollment;
+  const enrolledFacultyName = existingEnrollment?.course?.teacher || existingEnrollment?.course?.teacherName || existingEnrollment?.teacher || existingEnrollment?.instructor;
   const isLimitReached = currentEnrollmentCount >= 5 && !isAlreadyEnrolled;
 
   // Load Course Timetables strictly for this approved course
@@ -98,7 +106,7 @@ const CourseTeachers = () => {
 
   const handleEnroll = async () => {
     if (isAlreadyEnrolled) {
-      alert('You are already enrolled in this course.');
+      alert(`Enrollment Policy: You have already enrolled in this course with faculty ${enrolledFacultyName || 'an instructor'}. Institutional policy permits each student to enroll in a course only once under one faculty.`);
       navigate('/student/courses');
       return;
     }
@@ -226,44 +234,77 @@ const CourseTeachers = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Available Teachers</h1>
         <p className="text-gray-600 mt-2">Select a teacher whose weekly lesson plan matches your learning style.</p>
+        {isAlreadyEnrolled && (
+          <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-sm">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="text-emerald-600 shrink-0" size={20} />
+              <div>
+                <span className="font-bold text-emerald-900">Enrolled Course Policy:</span>
+                <span className="text-emerald-800 ml-1">
+                  You are enrolled in this course under <strong>{enrolledFacultyName || 'your assigned faculty'}</strong>. A student can enroll in a course only once for only one faculty.
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/student/courses')}
+              className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition-colors shrink-0 ml-4 cursor-pointer"
+            >
+              View in My Courses
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Left Column: List of Teachers */}
         <div className="lg:col-span-1 space-y-4">
-          {availableTeachers.map(teacher => (
-            <div 
-              key={teacher.id}
-              onClick={() => setSelectedTeacher(teacher)}
-              className={`p-5 rounded-xl border-2 transition-all cursor-pointer flex items-start gap-4 ${
-                selectedTeacher?.id === teacher.id 
-                  ? 'border-blue-500 bg-blue-50 shadow-md' 
-                  : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-gray-50'
-              }`}
-            >
-              <img src={teacher.avatar} alt={teacher.name} className="w-12 h-12 rounded-full shadow-sm" />
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-900">{teacher.name}</h3>
-                <p className="text-xs text-blue-600 mb-1">{teacher.email}</p>
-                <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
-                  <span className="flex items-center gap-1 text-amber-500 font-medium">
-                    <Star size={14} className="fill-current" /> {teacher.rating}
+          {availableTeachers.map(teacher => {
+            const isEnrolledWithThisTeacher = isAlreadyEnrolled && (
+              teacher.name === enrolledFacultyName || 
+              (enrolledFacultyName && (teacher.name.includes(enrolledFacultyName) || enrolledFacultyName.includes(teacher.name)))
+            );
+
+            return (
+              <div 
+                key={teacher.id}
+                onClick={() => setSelectedTeacher(teacher)}
+                className={`p-5 rounded-xl border-2 transition-all cursor-pointer flex items-start gap-4 relative ${
+                  isEnrolledWithThisTeacher
+                    ? 'border-emerald-500 bg-emerald-50/70 shadow-md ring-2 ring-emerald-300'
+                    : selectedTeacher?.id === teacher.id 
+                      ? 'border-blue-500 bg-blue-50 shadow-md' 
+                      : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-gray-50'
+                }`}
+              >
+                {isEnrolledWithThisTeacher && (
+                  <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-600 text-white flex items-center gap-1 shadow-xs">
+                    <CheckCircle size={10} /> Enrolled Faculty
                   </span>
-                  <span>•</span>
-                  <span>{teacher.students} students</span>
-                </div>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  <span className="text-xs font-medium px-2 py-0.5 bg-blue-50 border border-blue-100 rounded-md text-blue-700">
-                    {teacher.subject || 'Core Faculty'}
-                  </span>
-                  <span className="text-xs font-medium px-2 py-0.5 bg-white border border-gray-200 rounded-md text-gray-600">
-                    {teacher.style}
-                  </span>
+                )}
+                <img src={teacher.avatar} alt={teacher.name} className="w-12 h-12 rounded-full shadow-sm" />
+                <div className="flex-1">
+                  <h3 className="font-bold text-gray-900">{teacher.name}</h3>
+                  <p className="text-xs text-blue-600 mb-1">{teacher.email}</p>
+                  <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
+                    <span className="flex items-center gap-1 text-amber-500 font-medium">
+                      <Star size={14} className="fill-current" /> {teacher.rating}
+                    </span>
+                    <span>•</span>
+                    <span>{teacher.students} students</span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <span className="text-xs font-medium px-2 py-0.5 bg-blue-50 border border-blue-100 rounded-md text-blue-700">
+                      {teacher.subject || 'Core Faculty'}
+                    </span>
+                    <span className="text-xs font-medium px-2 py-0.5 bg-white border border-gray-200 rounded-md text-gray-600">
+                      {teacher.style}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Right Column: Weekly Lesson Plan Details */}
