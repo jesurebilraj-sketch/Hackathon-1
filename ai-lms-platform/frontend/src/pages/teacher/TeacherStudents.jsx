@@ -28,14 +28,44 @@ const TeacherStudents = () => {
       } catch (error) {
         console.warn("Failed to fetch API students. Using local mock state.", error);
       } finally {
-        // Fallback check: If the API failed or returned empty, we could build a list from mockEnrollments.
-        // We now save to `teacherStudents_${teacherId}` in local storage during CourseTeachers.jsx fallback.
-        let mockTeacherStudents = JSON.parse(localStorage.getItem(`teacherStudents_${teacherId}`) || '[]');
-        
-        // Robust fallback: ALSO scan all mockEnrollments_ keys for past enrollments
-        const teacherNames = { 1: 'Dr. Alan Turing', 2: 'Prof. Grace Hopper', 3: 'Dr. Ada Lovelace' };
-        const myName = teacherNames[teacherId];
+        // 1. Load Administrator-Approved courses handled by this teacher
+        const approvedCourses = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
+        const teacherName = localStorage.getItem('userName') || 'Dr. Alan Turing';
+        const teacherEmail = (localStorage.getItem('userEmail') || '').toLowerCase();
+        const lastName = teacherName.split(' ').pop();
 
+        const myApprovedCourses = approvedCourses.filter(c => {
+          if (c.teacherEmail && c.teacherEmail.toLowerCase() === teacherEmail) return true;
+          if (c.instructor && (c.instructor === teacherName || c.instructor.includes(lastName))) return true;
+          if (c.teacher && (c.teacher === teacherName || c.teacher.includes(lastName))) return true;
+          return false;
+        });
+
+        // If this teacher has no approved courses, they cannot have active student enrollments
+        if (myApprovedCourses.length === 0) {
+          setStudents([]);
+          setLoading(false);
+          return;
+        }
+
+        // 2. Load stored student enrollments specifically for approved courses
+        const validStudents = [];
+        const seen = new Set();
+
+        // Check teacherStudents_${teacherId}
+        const directList = JSON.parse(localStorage.getItem(`teacherStudents_${teacherId}`) || '[]');
+        for (const s of directList) {
+          const isCourseApproved = myApprovedCourses.some(ac => 
+            String(ac.id) === String(s.courseId) || 
+            (ac.title && s.course && ac.title.trim().toLowerCase() === s.course.trim().toLowerCase())
+          );
+          if (isCourseApproved && !seen.has(`${s.email}_${s.course}`)) {
+            seen.add(`${s.email}_${s.course}`);
+            validStudents.push(s);
+          }
+        }
+
+        // Scan mockEnrollments_ keys
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
           if (key && key.startsWith('mockEnrollments_')) {
@@ -43,17 +73,25 @@ const TeacherStudents = () => {
             try {
               const enrs = JSON.parse(localStorage.getItem(key) || '[]');
               for (const enr of enrs) {
-                if (enr.course && enr.course.teacher === myName) {
-                  // Found an enrollment matching this teacher!
-                  if (!mockTeacherStudents.find(s => s.email === email && s.course === enr.course.title)) {
-                    mockTeacherStudents.push({
+                const cObj = enr.course || enr;
+                const matchingCourse = myApprovedCourses.find(ac => 
+                  String(ac.id) === String(cObj.id) || 
+                  (ac.title && cObj.title && ac.title.trim().toLowerCase() === cObj.title.trim().toLowerCase())
+                );
+                
+                if (matchingCourse) {
+                  const comboKey = `${email}_${matchingCourse.title}`;
+                  if (!seen.has(comboKey)) {
+                    seen.add(comboKey);
+                    validStudents.push({
                       id: email,
                       name: email.split('@')[0],
                       email: email,
-                      course: enr.course.title,
-                      progress: 0,
+                      course: matchingCourse.title,
+                      courseId: matchingCourse.id,
+                      progress: enr.progress || 0,
                       lastActive: 'Just now',
-                      modules: []
+                      modules: matchingCourse.modules || []
                     });
                   }
                 }
@@ -61,16 +99,23 @@ const TeacherStudents = () => {
             } catch (e) {}
           }
         }
-        
-        // Merge API students and Mock students (avoiding duplicates)
-        const combined = [...apiStudents];
-        for (const mock of mockTeacherStudents) {
-          if (!combined.find(s => s.email === mock.email && s.course === mock.course)) {
-            combined.push(mock);
+
+        // Also check apiStudents if any, strictly validating against myApprovedCourses
+        for (const apiS of apiStudents) {
+          const isCourseApproved = myApprovedCourses.some(ac => 
+            String(ac.id) === String(apiS.course_id || apiS.id) || 
+            (ac.title && apiS.course && ac.title.trim().toLowerCase() === apiS.course.trim().toLowerCase())
+          );
+          if (isCourseApproved) {
+            const comboKey = `${apiS.email}_${apiS.course}`;
+            if (!seen.has(comboKey)) {
+              seen.add(comboKey);
+              validStudents.push(apiS);
+            }
           }
         }
-        
-        setStudents(combined);
+
+        setStudents(validStudents);
         setLoading(false);
       }
     };
