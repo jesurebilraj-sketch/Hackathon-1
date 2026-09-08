@@ -81,10 +81,12 @@ const StudentCourses = () => {
     const handleUpdate = () => fetchData();
     window.addEventListener('storage', handleUpdate);
     window.addEventListener('approvedCoursesUpdated', handleUpdate);
+    window.addEventListener('enrollmentsUpdated', handleUpdate);
 
     return () => {
       window.removeEventListener('storage', handleUpdate);
       window.removeEventListener('approvedCoursesUpdated', handleUpdate);
+      window.removeEventListener('enrollmentsUpdated', handleUpdate);
     };
   }, []);
 
@@ -124,21 +126,21 @@ const StudentCourses = () => {
         </label>
       </div>
 
-      {/* Empty State / Browse Prompt if no courses */}
-      {isNewUser && (
+      {/* Empty State / Browse Prompt if no courses registered */}
+      {enrolledCourses.length === 0 && (
         <div className="bg-white p-12 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center justify-center text-center">
           <div className="w-20 h-20 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-6">
             <Compass size={40} />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-3">You haven't registered for any courses</h2>
           <p className="text-gray-500 max-w-md mb-8">
-            Browse our catalog of AI-generated courses below to begin your learning journey.
+            Browse our catalog of administrator-approved courses below to begin your learning journey.
           </p>
         </div>
       )}
 
-      {/* Active Courses (only show if enrolled) */}
-      {!isNewUser && enrolledCourses.length > 0 && (
+      {/* Active Courses (show whenever student has enrolled courses) */}
+      {enrolledCourses.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-xl font-bold text-gray-900 mb-4">Continue Learning</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

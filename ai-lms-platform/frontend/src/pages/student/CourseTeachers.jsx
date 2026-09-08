@@ -102,43 +102,28 @@ const CourseTeachers = () => {
       return;
     }
 
-    setEnrolling(true);
-    const studentId = parseInt(localStorage.getItem('studentId') || '1');
-    const userEmail = localStorage.getItem('userEmail') || 'default';
-
-    try {
-      // Use the actual API!
-      await api.enrollStudent(studentId, id, selectedTeacher.id);
-      
+    // Common enrollment persistence function to ensure student courses & teacher students sync seamlessly
+    const persistEnrollment = () => {
       // Increment teacher student count
       const newStats = { ...teacherStats, [selectedTeacher.id]: (teacherStats[selectedTeacher.id] || 0) + 1 };
       setTeacherStats(newStats);
       localStorage.setItem('teacherStats', JSON.stringify(newStats));
 
-      alert(`Successfully registered with ${selectedTeacher.name}!`);
-      navigate('/student/dashboard');
-    } catch (err) {
-      console.warn("API failed, using mock success.", err);
-      // Increment teacher student count anyway for demo
-      const newStats = { ...teacherStats, [selectedTeacher.id]: (teacherStats[selectedTeacher.id] || 0) + 1 };
-      setTeacherStats(newStats);
-      localStorage.setItem('teacherStats', JSON.stringify(newStats));
-      
-      // Save a mock enrollment to localStorage scoped to this user
+      // Resolve course details from approved courses
+      const approvedCourses = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
+      const matchedCourse = approvedCourses.find(c => String(c.id) === String(id)) || {
+        id: id,
+        title: `Course #${id}`,
+        category: 'General',
+        modules: []
+      };
+
+      const resolvedTitle = matchedCourse.title || `Course #${id}`;
+      const resolvedCategory = matchedCourse.category || 'General';
+
+      // 1. Scoped student mock enrollments
       const mockEnrollments = JSON.parse(localStorage.getItem(`mockEnrollments_${userEmail}`) || '[]');
-      if (!mockEnrollments.find(e => (e.course?.id == id || e.id == id))) {
-        // Resolve course details from approved courses
-        const approvedCourses = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
-        const matchedCourse = approvedCourses.find(c => c.id == id) || {
-          id: id,
-          title: `Course #${id}`,
-          category: 'General',
-          modules: []
-        };
-
-        const resolvedTitle = matchedCourse.title || `Course #${id}`;
-        const resolvedCategory = matchedCourse.category || 'General';
-
+      if (!mockEnrollments.find(e => (String(e.course?.id) === String(id) || String(e.id) === String(id)))) {
         mockEnrollments.push({
           enrollment_id: Date.now(),
           course: {
@@ -146,15 +131,18 @@ const CourseTeachers = () => {
             title: resolvedTitle,
             category: resolvedCategory,
             teacher: selectedTeacher.name,
-            modules: matchedCourse.modules || []
+            modules: matchedCourse.modules || [],
+            imageUrl: matchedCourse.imageUrl || 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=500&q=80'
           }
         });
         localStorage.setItem(`mockEnrollments_${userEmail}`, JSON.stringify(mockEnrollments));
-        
-        // Save to global teacher students list for the Teacher Portal demo
-        const userName = localStorage.getItem('userName') || 'Demo Student';
-        const teacherStudentsKey = `teacherStudents_${selectedTeacher.id}`;
-        const mockTeacherStudents = JSON.parse(localStorage.getItem(teacherStudentsKey) || '[]');
+      }
+
+      // 2. Global teacher students list for the Teacher Portal demo
+      const userName = localStorage.getItem('userName') || 'Demo Student';
+      const teacherStudentsKey = `teacherStudents_${selectedTeacher.id}`;
+      const mockTeacherStudents = JSON.parse(localStorage.getItem(teacherStudentsKey) || '[]');
+      if (!mockTeacherStudents.find(s => s.id === studentId && s.course === resolvedTitle)) {
         mockTeacherStudents.push({
           id: studentId,
           name: userName,
@@ -166,9 +154,23 @@ const CourseTeachers = () => {
         });
         localStorage.setItem(teacherStudentsKey, JSON.stringify(mockTeacherStudents));
       }
-      
+
+      // Notify other views and components that enrollments have updated
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new Event('enrollmentsUpdated'));
+    };
+
+    try {
+      // Use the actual API!
+      await api.enrollStudent(studentId, id, selectedTeacher.id);
+      persistEnrollment();
       alert(`Successfully registered with ${selectedTeacher.name}!`);
-      navigate('/student/dashboard');
+      navigate('/student/courses');
+    } catch (err) {
+      console.warn("API failed, using mock success fallback.", err);
+      persistEnrollment();
+      alert(`Successfully registered with ${selectedTeacher.name}!`);
+      navigate('/student/courses');
     } finally {
       setEnrolling(false);
     }
