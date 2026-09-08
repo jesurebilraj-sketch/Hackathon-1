@@ -18,7 +18,11 @@ else:
 logger = logging.getLogger("lms.database")
 
 # Read DATABASE_URL from environment variable
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/lms_db")
+# If not explicitly configured or if postgres connection is not available, default to SQLite
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    DATABASE_URL = "sqlite:///./lms.db"
 
 # Normalize postgres:// to postgresql:// for SQLAlchemy compatibility
 if DATABASE_URL.startswith("postgres://"):
@@ -31,7 +35,20 @@ if DATABASE_URL.startswith("sqlite"):
 else:
     engine_kwargs["pool_pre_ping"] = True
 
-engine = create_engine(DATABASE_URL, **engine_kwargs)
+try:
+    engine = create_engine(DATABASE_URL, **engine_kwargs)
+    # Test connection if postgres
+    if not DATABASE_URL.startswith("sqlite"):
+        with engine.connect() as conn:
+            pass
+except Exception as conn_err:
+    logger.warning(
+        "Could not connect to PostgreSQL (%s). Falling back to SQLite database.",
+        conn_err,
+    )
+    DATABASE_URL = "sqlite:///./lms.db"
+    engine_kwargs = {"connect_args": {"check_same_thread": False}}
+    engine = create_engine(DATABASE_URL, **engine_kwargs)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
