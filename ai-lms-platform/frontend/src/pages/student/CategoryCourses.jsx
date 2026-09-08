@@ -26,32 +26,40 @@ const CategoryCourses = () => {
       'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=500&q=80'
     ];
 
+    // Check if Administrator appointed a specific teacher for this subject
+    const customFaculty = JSON.parse(localStorage.getItem('customFacultyList') || '[]');
+    const assignments = JSON.parse(localStorage.getItem('teacherSubjectAssignments') || '{}');
+    
+    // Find any teacher assigned to this category/subject
+    const assignedTeachers = customFaculty.filter(f => f.subject === cat || assignments[f.id] === cat);
+    const primaryTeacherName = assignedTeachers.length > 0 ? assignedTeachers[0].name : 'Dr. Alan Turing';
+
     return [
       {
         id: `mock-1`,
         title: `Introduction to ${cat}`,
-        instructor: 'Dr. Alan Turing',
+        instructor: primaryTeacherName,
         modules: 12,
         imageUrl: images[(seed) % images.length]
       },
       {
         id: `mock-2`,
         title: `Advanced ${cat} Patterns`,
-        instructor: 'Prof. Grace Hopper',
+        instructor: assignedTeachers.length > 1 ? assignedTeachers[1].name : 'Prof. Grace Hopper',
         modules: 18,
         imageUrl: images[(seed + 1) % images.length]
       },
       {
         id: `mock-3`,
         title: `${cat} for Beginners`,
-        instructor: 'AI Generated',
+        instructor: primaryTeacherName,
         modules: 8,
         imageUrl: images[(seed + 2) % images.length]
       },
       {
         id: `mock-4`,
         title: `Mastering ${cat}`,
-        instructor: 'Ada Lovelace',
+        instructor: 'Dr. Ada Lovelace',
         modules: 24,
         imageUrl: images[(seed + 3) % images.length]
       }

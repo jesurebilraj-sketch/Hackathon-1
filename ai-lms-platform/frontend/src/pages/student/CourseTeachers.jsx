@@ -62,13 +62,16 @@ const CourseTeachers = () => {
     }
   ];
 
-  // Merge custom faculty added by Administrator
+  // Merge custom faculty added by Administrator and their assigned subjects
   const customFaculty = JSON.parse(localStorage.getItem('customFacultyList') || '[]');
+  const subjectAssignments = JSON.parse(localStorage.getItem('teacherSubjectAssignments') || '{}');
+
   const mappedCustomFaculty = customFaculty.map(f => ({
     id: f.id,
     name: f.name,
     email: f.email,
     avatar: f.avatar,
+    subject: subjectAssignments[f.id] || f.subject || f.department || 'Specialized Subject',
     rating: f.rating || 5.0,
     students: teacherStats[f.id] || 0,
     style: f.style || 'Interactive & Engaging',
@@ -198,8 +201,13 @@ const CourseTeachers = () => {
                   <span>•</span>
                   <span>{teacher.students} students</span>
                 </div>
-                <div className="mt-2 text-xs font-medium px-2 py-1 bg-white border border-gray-200 rounded-md inline-block text-gray-600">
-                  {teacher.style}
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <span className="text-xs font-medium px-2 py-0.5 bg-blue-50 border border-blue-100 rounded-md text-blue-700">
+                    {teacher.subject || 'Core Faculty'}
+                  </span>
+                  <span className="text-xs font-medium px-2 py-0.5 bg-white border border-gray-200 rounded-md text-gray-600">
+                    {teacher.style}
+                  </span>
                 </div>
               </div>
             </div>

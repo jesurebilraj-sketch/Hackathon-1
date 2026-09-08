@@ -56,8 +56,21 @@ const AdminTimetable = () => {
     }
   ];
 
+  const [facultyList, setFacultyList] = useState([]);
+  const [teacherFilter, setTeacherFilter] = useState('All');
+
   const loadData = () => {
-    // 1. Load Courses
+    // 1. Load Faculty
+    const defaultFaculty = [
+      { id: 1, name: 'Dr. Alan Turing' },
+      { id: 2, name: 'Prof. Grace Hopper' },
+      { id: 3, name: 'Dr. Ada Lovelace' }
+    ];
+    const customFaculty = JSON.parse(localStorage.getItem('customFacultyList') || '[]');
+    const allFaculty = [...defaultFaculty, ...customFaculty];
+    setFacultyList(allFaculty);
+
+    // 2. Load Courses
     const defaultCourses = [
       { id: 101, title: 'Advanced React Patterns' },
       { id: 102, title: 'Calculus I' },
@@ -67,7 +80,7 @@ const AdminTimetable = () => {
     const approved = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
     setAvailableCourses([...defaultCourses, ...approved]);
 
-    // 2. Load Timetable
+    // 3. Load Timetable
     const saved = localStorage.getItem('courseTimetables');
     if (!saved) {
       localStorage.setItem('courseTimetables', JSON.stringify(defaultTimetables));
@@ -89,6 +102,7 @@ const AdminTimetable = () => {
     const form = e.target;
     const courseId = form.courseId.value;
     const selectedCourse = availableCourses.find(c => c.id.toString() === courseId);
+    const instructor = form.instructor.value.trim() || selectedCourse.teacher || 'Assigned Faculty';
     const sessionType = form.sessionType.value; // 'class' | 'practice'
     const day = form.day.value;
     const startTime = form.startTime.value; // "HH:MM"
@@ -138,7 +152,7 @@ const AdminTimetable = () => {
       startTime,
       endTime,
       room,
-      instructor: selectedCourse.teacher || 'Assigned Faculty'
+      instructor
     };
 
     const updated = [...timetables, newEntry];
@@ -177,6 +191,34 @@ const AdminTimetable = () => {
         </button>
       </div>
 
+      {/* Filter by Registered Teacher Bar */}
+      <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <Clock className="text-blue-600 shrink-0" size={18} />
+          <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Teacher Timetable Filter:</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <select
+            value={teacherFilter}
+            onChange={(e) => setTeacherFilter(e.target.value)}
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white font-medium text-gray-800 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="All">All Registered Teachers ({timetables.length} slots)</option>
+            {facultyList.map(f => (
+              <option key={f.id} value={f.name}>{f.name}</option>
+            ))}
+          </select>
+          {teacherFilter !== 'All' && (
+            <button 
+              onClick={() => setTeacherFilter('All')}
+              className="text-xs text-blue-600 hover:underline font-medium"
+            >
+              Reset Filter
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Constraints Notice Banner */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-3 text-xs text-blue-900">
@@ -201,6 +243,10 @@ const AdminTimetable = () => {
         {daysOfWeek.map((day) => {
           const daySessions = timetables
             .filter(t => t.day === day)
+            .filter(t => {
+              if (teacherFilter === 'All') return true;
+              return t.instructor === teacherFilter || (t.instructor && t.instructor.includes(teacherFilter.split(' ').pop()));
+            })
             .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
           return (
@@ -300,17 +346,31 @@ const AdminTimetable = () => {
                 </div>
               )}
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Select Course *</label>
-                <select
-                  name="courseId"
-                  required
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {availableCourses.map(c => (
-                    <option key={c.id} value={c.id}>{c.title}</option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Select Course *</label>
+                  <select
+                    name="courseId"
+                    required
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {availableCourses.map(c => (
+                      <option key={c.id} value={c.id}>{c.title}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Assigned Teacher *</label>
+                  <select
+                    name="instructor"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {facultyList.map(f => (
+                      <option key={f.id} value={f.name}>{f.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div>
@@ -411,3 +471,4 @@ const AdminTimetable = () => {
 };
 
 export default AdminTimetable;
+
