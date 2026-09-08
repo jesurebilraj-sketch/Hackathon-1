@@ -9,6 +9,7 @@ import TeacherDashboard from '../pages/teacher/TeacherDashboard';
 import CreateCourse from '../pages/teacher/CreateCourse';
 import CourseBuilder from '../pages/teacher/CourseBuilder';
 import TeacherStudents from '../pages/teacher/TeacherStudents';
+import TeacherTimetable from '../pages/teacher/TeacherTimetable';
 
 // Student Pages
 import StudentDashboard from '../pages/student/StudentDashboard';
@@ -37,6 +38,7 @@ const AppRoutes = () => {
         <Route path="/teacher" element={<DashboardLayout role="teacher" />}>
           <Route path="dashboard" element={<TeacherDashboard />} />
           <Route path="courses" element={<Placeholder title="My Courses" />} />
+          <Route path="timetable" element={<TeacherTimetable />} />
           <Route path="create-course" element={<CreateCourse />} />
           <Route path="courses/:id/builder" element={<CourseBuilder />} />
           <Route path="analytics" element={<Placeholder title="Course Analytics" />} />

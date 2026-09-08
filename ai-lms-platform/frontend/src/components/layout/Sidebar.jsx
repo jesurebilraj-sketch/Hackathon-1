@@ -14,6 +14,7 @@ const Sidebar = ({ role }) => {
   const teacherLinks = [
     { name: 'Dashboard', path: '/teacher/dashboard', icon: <LayoutDashboard size={20} /> },
     { name: 'My Courses', path: '/teacher/courses', icon: <BookOpen size={20} /> },
+    { name: 'My Timetable', path: '/teacher/timetable', icon: <Clock size={20} /> },
     { name: 'Create Course', path: '/teacher/create-course', icon: <BookMarked size={20} /> },
     { name: 'Course Analytics', path: '/teacher/analytics', icon: <LineChart size={20} /> },
     { name: 'Students', path: '/teacher/students', icon: <Users size={20} /> },
