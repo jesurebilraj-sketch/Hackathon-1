@@ -18,12 +18,26 @@ else:
 
 from database.database import init_db, check_db_connection, get_db
 # Explicitly import models to guarantee registration on Base.metadata
+from database.models import (  # noqa: F401
+    User,
+    Course,
+    Module,
+    Lesson,
+    Quiz,
+    QuizQuestion,
+    QuizSubmission,
+    UserMastery,
+    StudyPreference,
+    StudyPlan,
+    StudySession,
+)
 from database.models import User, Course, Module, Lesson, Enrollment, StudentProgress, Message  # noqa: F401
 from api import (
     courses_router,
     course_generation_router,
     lessons_router,
     quizzes_router,
+    mastery_router,
     tutor_router,
     planner_router,
     analytics_router,
@@ -135,6 +149,7 @@ app.include_router(courses_router)
 app.include_router(course_generation_router)
 app.include_router(lessons_router)
 app.include_router(quizzes_router)
+app.include_router(mastery_router)
 app.include_router(tutor_router)
 app.include_router(planner_router)
 app.include_router(analytics_router)
