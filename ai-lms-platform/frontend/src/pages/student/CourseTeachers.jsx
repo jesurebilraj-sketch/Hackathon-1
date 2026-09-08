@@ -91,9 +91,9 @@ const CourseTeachers = () => {
   const currentEnrollmentCount = studentLocalEnrollments.length;
   const isLimitReached = currentEnrollmentCount >= 5;
 
-  // Load Course Timetables
+  // Load Course Timetables strictly for this approved course
   const allTimetables = JSON.parse(localStorage.getItem('courseTimetables') || '[]');
-  const courseTimetable = allTimetables.filter(t => t.courseId == id || t.courseId === 101);
+  const courseTimetable = allTimetables.filter(t => t.courseId == id || t.courseTitle?.toLowerCase() === course?.title?.toLowerCase());
 
   const handleEnroll = async () => {
     // 5-Course Limit Enforcement

@@ -17,18 +17,9 @@ const TeacherDashboard = () => {
   const [actualStudentCount, setActualStudentCount] = useState(0);
 
   useEffect(() => {
-    // 1. Timetable
-    const allTimetables = JSON.parse(localStorage.getItem('courseTimetables') || '[]');
-    const lastName = userName.split(' ').pop();
-    const filtered = allTimetables.filter(slot => {
-      if (slot.instructor === userName) return true;
-      if (slot.teacherId && slot.teacherId.toString() === teacherId.toString()) return true;
-      return slot.instructor && slot.instructor.includes(lastName);
-    });
-    setMySlots(filtered);
-
-    // 2. Real Active Courses Handled by this teacher
+    // 1. Real Active Courses Handled by this teacher
     const approved = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
+    const lastName = userName.split(' ').pop();
     const myCourses = approved.filter(c => {
       if (c.teacherEmail && c.teacherEmail.toLowerCase() === userEmail.toLowerCase()) return true;
       if (c.instructor && (c.instructor === userName || c.instructor.includes(lastName))) return true;
@@ -36,6 +27,19 @@ const TeacherDashboard = () => {
       return false;
     });
     setActiveCoursesCount(myCourses.length);
+
+    // 2. Timetable - strictly only for approved courses
+    const allTimetables = JSON.parse(localStorage.getItem('courseTimetables') || '[]');
+    const filtered = allTimetables.filter(slot => {
+      // Must be an approved course
+      const isApproved = approved.some(ac => ac.id === slot.courseId || ac.title?.toLowerCase() === slot.courseTitle?.toLowerCase());
+      if (!isApproved) return false;
+
+      if (slot.instructor === userName) return true;
+      if (slot.teacherId && slot.teacherId.toString() === teacherId.toString()) return true;
+      return slot.instructor && slot.instructor.includes(lastName);
+    });
+    setMySlots(filtered);
 
     // 3. Real Student Count enrolled in this teacher's courses
     let uniqueStudents = new Set();

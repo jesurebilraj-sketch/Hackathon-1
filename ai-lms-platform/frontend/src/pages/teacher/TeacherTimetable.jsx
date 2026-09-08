@@ -16,26 +16,33 @@ const TeacherTimetable = () => {
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   const loadData = () => {
-    // 1. Load Courses
-    const defaultCourses = [
-      { id: 101, title: 'Advanced React Patterns' },
-      { id: 102, title: 'Calculus I' },
-      { id: 103, title: 'World History: 20th Century' },
-      { id: 104, title: 'Physics for Engineers' }
-    ];
+    // 1. Load ONLY courses that have been approved by the Administrator
     const approved = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
-    setMyCourses([...defaultCourses, ...approved]);
+    
+    // Filter courses handled by this teacher
+    const lastName = teacherName.split(' ').pop();
+    const handledApproved = approved.filter(c => {
+      if (c.teacherEmail && c.teacherEmail.toLowerCase() === (localStorage.getItem('userEmail') || '').toLowerCase()) return true;
+      if (c.instructor && (c.instructor === teacherName || c.instructor.includes(lastName))) return true;
+      if (c.teacher && (c.teacher === teacherName || c.teacher.includes(lastName))) return true;
+      return false;
+    });
 
-    // 2. Load all timetables
+    setMyCourses(handledApproved);
+
+    // 2. Load all timetables and strictly retain only slots whose course is approved by the administrator
     const allTimetables = JSON.parse(localStorage.getItem('courseTimetables') || '[]');
-    setTimetables(allTimetables);
+    const approvedOnlyTimetables = allTimetables.filter(slot => 
+      approved.some(ac => ac.id === slot.courseId || ac.title?.toLowerCase() === slot.courseTitle?.toLowerCase())
+    );
+    setTimetables(approvedOnlyTimetables);
   };
 
   useEffect(() => {
     loadData();
   }, []);
 
-  // Filter slots for this teacher
+  // Filter slots strictly for this teacher from the approved courses
   const mySlots = timetables.filter(slot => {
     if (slot.instructor === teacherName) return true;
     if (slot.teacherId && slot.teacherId.toString() === teacherId.toString()) return true;

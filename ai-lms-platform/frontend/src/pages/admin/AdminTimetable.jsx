@@ -70,24 +70,17 @@ const AdminTimetable = () => {
     const allFaculty = [...defaultFaculty, ...customFaculty];
     setFacultyList(allFaculty);
 
-    // 2. Load Courses
-    const defaultCourses = [
-      { id: 101, title: 'Advanced React Patterns' },
-      { id: 102, title: 'Calculus I' },
-      { id: 103, title: 'World History: 20th Century' },
-      { id: 104, title: 'Physics for Engineers' }
-    ];
+    // 2. Load Courses strictly from approved courses
     const approved = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
-    setAvailableCourses([...defaultCourses, ...approved]);
+    setAvailableCourses(approved);
 
-    // 3. Load Timetable
+    // 3. Load Timetable (only slots for approved courses)
     const saved = localStorage.getItem('courseTimetables');
-    if (!saved) {
-      localStorage.setItem('courseTimetables', JSON.stringify(defaultTimetables));
-      setTimetables(defaultTimetables);
-    } else {
-      setTimetables(JSON.parse(saved));
-    }
+    const allSlots = saved ? JSON.parse(saved) : [];
+    const approvedSlots = allSlots.filter(slot =>
+      approved.some(ac => ac.id === slot.courseId || ac.title?.toLowerCase() === slot.courseTitle?.toLowerCase())
+    );
+    setTimetables(approvedSlots);
   };
 
   useEffect(() => {
