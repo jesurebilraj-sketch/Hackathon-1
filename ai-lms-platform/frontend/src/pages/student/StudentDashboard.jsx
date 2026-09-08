@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Target, BookOpen, Clock, Compass, Calendar, CheckCircle, ChevronRight, User } from 'lucide-react';
+import { Target, BookOpen, Clock, Compass, Calendar, CheckCircle, ChevronRight, User, AlertTriangle, Bell, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const StudentDashboard = () => {
@@ -10,6 +10,7 @@ const StudentDashboard = () => {
   const [enrolledApprovedCourses, setEnrolledApprovedCourses] = useState([]);
   const [availableApprovedCourses, setAvailableApprovedCourses] = useState([]);
   const [timetables, setTimetables] = useState([]);
+  const [rescheduledClasses, setRescheduledClasses] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,6 +25,10 @@ const StudentDashboard = () => {
       // 2. Load scheduled timetables (lectures before 6pm, practice after 6:30pm)
       const allTimetables = JSON.parse(localStorage.getItem('courseTimetables') || '[]');
       setTimetables(allTimetables);
+
+      // 3. Load Rescheduled Classes from Faculty
+      const allRescheduled = JSON.parse(localStorage.getItem('rescheduledClasses') || '[]');
+      setRescheduledClasses(allRescheduled);
 
       // 3. Fetch enrollments
       let apiEnrollments = [];
@@ -69,10 +74,12 @@ const StudentDashboard = () => {
     const handleStorageUpdate = () => loadDashboardData();
     window.addEventListener('storage', handleStorageUpdate);
     window.addEventListener('approvedCoursesUpdated', handleStorageUpdate);
+    window.addEventListener('rescheduledClassesUpdated', handleStorageUpdate);
 
     return () => {
       window.removeEventListener('storage', handleStorageUpdate);
       window.removeEventListener('approvedCoursesUpdated', handleStorageUpdate);
+      window.removeEventListener('rescheduledClassesUpdated', handleStorageUpdate);
     };
   }, []);
 
@@ -84,6 +91,11 @@ const StudentDashboard = () => {
   // Find timetable sessions for enrolled approved courses
   const enrolledTimetableSlots = timetables.filter(t => 
     enrolledApprovedCourses.some(c => c.id === t.courseId || c.title === t.courseTitle)
+  );
+
+  // Find rescheduled classes relevant to student's enrolled courses or all approved courses if browsing
+  const activeReschedulesForEnrolled = rescheduledClasses.filter(r => 
+    enrolledApprovedCourses.some(c => c.id === r.courseId || c.title?.toLowerCase() === r.courseTitle?.toLowerCase())
   );
 
   return (
@@ -109,6 +121,70 @@ const StudentDashboard = () => {
           </button>
         </div>
       </div>
+
+      {/* Rescheduled Class Alert Banner for Students */}
+      {activeReschedulesForEnrolled.length > 0 && (
+        <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-2xl p-6 text-white shadow-lg space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2.5 bg-white/20 backdrop-blur-md rounded-xl">
+                <Bell size={22} className="text-white animate-bounce" />
+              </div>
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full inline-block mb-1">
+                  Urgent Faculty Notification
+                </span>
+                <h2 className="text-xl font-bold">Class Schedule Notice from Your Faculty</h2>
+              </div>
+            </div>
+            <span className="text-xs font-semibold px-3 py-1 bg-white/20 backdrop-blur-md rounded-full">
+              {activeReschedulesForEnrolled.length} Rescheduled Class{activeReschedulesForEnrolled.length > 1 ? 'es' : ''}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+            {activeReschedulesForEnrolled.map((reschedule) => (
+              <div key={reschedule.id} className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/25 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <span className="text-xs font-bold text-amber-100 uppercase tracking-wide block">
+                      {reschedule.sessionType === 'class' ? 'Course Lecture' : 'Practice Lab'}
+                    </span>
+                    <h3 className="font-bold text-base text-white">{reschedule.courseTitle}</h3>
+                    <p className="text-xs text-amber-100 mt-0.5">Faculty: {reschedule.teacherName}</p>
+                  </div>
+                  <span className="px-2 py-0.5 bg-amber-300 text-amber-950 font-bold rounded text-[10px] uppercase">
+                    Rescheduled
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs bg-black/15 p-2.5 rounded-lg border border-white/10">
+                  <div>
+                    <span className="text-amber-200 block text-[10px] uppercase">Original Schedule</span>
+                    <span className="line-through text-amber-100">
+                      {reschedule.originalDay}, {reschedule.originalStartTime} - {reschedule.originalEndTime}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-emerald-300 font-bold block text-[10px] uppercase">New Schedule</span>
+                    <span className="text-white font-bold">
+                      {reschedule.newDay} ({reschedule.newDate}), {reschedule.newStartTime} - {reschedule.newEndTime}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-white/15 p-2.5 rounded-lg border border-white/15 text-xs">
+                  <p className="font-semibold text-amber-200 flex items-center gap-1 text-[11px] mb-0.5">
+                    <MessageSquare size={12} /> Instructor's Message:
+                  </p>
+                  <p className="italic text-white">"{reschedule.message}"</p>
+                  <p className="text-[10px] text-amber-200 mt-1 font-medium">Room / Link: {reschedule.room}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {!hasEnrollments ? (
         // Empty State: No Approved Courses Enrolled Yet
@@ -314,25 +390,91 @@ const StudentDashboard = () => {
           {enrolledTimetableSlots.length > 0 && (
             <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                  <Calendar size={20} className="text-blue-600" /> Approved Course Timetable
-                </h2>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <Calendar size={20} className="text-blue-600" /> Approved Course Timetable
+                  </h2>
+                  <p className="text-xs text-gray-500">Official schedule approved by administrator with live faculty reschedule updates.</p>
+                </div>
                 <span className="text-xs text-gray-500">Lectures before 6:00 PM • Practice after 6:30 PM</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {enrolledTimetableSlots.map((slot) => (
-                  <div key={slot.id} className="p-3.5 rounded-lg border border-gray-200 bg-gray-50 flex items-start gap-3">
-                    <div className="p-2 bg-white rounded border border-gray-200 text-center min-w-[55px]">
-                      <span className="block text-xs font-bold text-blue-600 uppercase">{slot.day?.slice(0, 3)}</span>
-                      <span className="block text-[10px] text-gray-500">{slot.type}</span>
+                {enrolledTimetableSlots.map((slot) => {
+                  const activeReschedule = rescheduledClasses.find(r => 
+                    r.slotId === slot.id || 
+                    (r.courseId === slot.courseId && r.sessionType === slot.sessionType && r.originalDay === slot.day)
+                  );
+
+                  return (
+                    <div 
+                      key={slot.id} 
+                      className={`p-4 rounded-xl border flex flex-col justify-between ${
+                        activeReschedule
+                          ? 'border-amber-300 bg-amber-50/50 shadow-2xs'
+                          : 'border-gray-200 bg-gray-50'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                            slot.sessionType === 'practice' || slot.type === 'practice'
+                              ? 'bg-purple-100 text-purple-800'
+                              : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {slot.sessionType === 'practice' || slot.type === 'practice' ? 'Lab (> 6:30 PM)' : 'Lecture (< 6 PM)'}
+                          </span>
+
+                          {activeReschedule ? (
+                            <span className="px-2 py-0.5 bg-amber-200 text-amber-900 font-bold rounded text-[10px] flex items-center gap-1">
+                              <AlertTriangle size={11} /> Rescheduled
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-medium text-gray-500">
+                              Default Timetable
+                            </span>
+                          )}
+                        </div>
+
+                        <h4 className="font-bold text-gray-900 text-sm mb-1">{slot.courseTitle}</h4>
+
+                        {activeReschedule ? (
+                          <div className="space-y-2 mt-2">
+                            <div className="p-2 bg-white/90 rounded border border-amber-200 text-xs">
+                              <p className="text-gray-400 line-through text-[11px]">
+                                Default: {slot.day}, {slot.startTime} - {slot.endTime}
+                              </p>
+                              <p className="font-bold text-amber-900 text-xs mt-0.5">
+                                Rescheduled: {activeReschedule.newDay} ({activeReschedule.newDate})
+                              </p>
+                              <p className="font-semibold text-amber-800 text-xs">
+                                {activeReschedule.newStartTime} - {activeReschedule.newEndTime}
+                              </p>
+                            </div>
+
+                            <div className="p-2 bg-amber-100/70 rounded border border-amber-200 text-xs text-amber-900">
+                              <p className="font-bold flex items-center gap-1 text-[11px] mb-0.5">
+                                <MessageSquare size={11} /> Note from Faculty:
+                              </p>
+                              <p className="italic text-[11px]">"{activeReschedule.message}"</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-600 mt-1 space-y-0.5">
+                            <p className="font-semibold text-gray-800">{slot.day} • {slot.startTime} - {slot.endTime}</p>
+                            <p className="text-[11px] text-gray-500">Room: {slot.room}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-3 pt-2 border-t border-gray-200/60 text-[11px] text-gray-500 flex items-center justify-between">
+                        <span>Faculty: <strong className="text-gray-700">{slot.instructor || slot.teacherName || 'Faculty'}</strong></span>
+                        {activeReschedule && (
+                          <span className="text-amber-700 font-semibold">{activeReschedule.room}</span>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-bold text-gray-900 text-sm">{slot.courseTitle}</h4>
-                      <p className="text-xs text-gray-600">{slot.startTime} - {slot.endTime}</p>
-                      <p className="text-[11px] text-gray-500 mt-0.5">Faculty: {slot.teacherName} • Room: {slot.room}</p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
