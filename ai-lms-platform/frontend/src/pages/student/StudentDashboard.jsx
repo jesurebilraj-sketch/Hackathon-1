@@ -64,6 +64,16 @@ const StudentDashboard = () => {
     };
 
     loadDashboardData();
+
+    // Listen to local storage changes across tabs or window events
+    const handleStorageUpdate = () => loadDashboardData();
+    window.addEventListener('storage', handleStorageUpdate);
+    window.addEventListener('approvedCoursesUpdated', handleStorageUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageUpdate);
+      window.removeEventListener('approvedCoursesUpdated', handleStorageUpdate);
+    };
   }, []);
 
   if (loading) return null;
@@ -323,6 +333,61 @@ const StudentDashboard = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Newly Approved Courses Available for Enrollment */}
+          {availableApprovedCourses.filter(ac => !enrolledApprovedCourses.some(ec => ec.id === ac.id || ec.title?.toLowerCase() === ac.title?.toLowerCase())).length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Newly Approved Courses in Catalog</h2>
+                  <p className="text-xs text-gray-500">Recently verified and approved by the academic administrator.</p>
+                </div>
+                <button
+                  onClick={() => navigate('/student/courses')}
+                  className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  View Full Catalog &rarr;
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {availableApprovedCourses
+                  .filter(ac => !enrolledApprovedCourses.some(ec => ec.id === ac.id || ec.title?.toLowerCase() === ac.title?.toLowerCase()))
+                  .slice(0, 3)
+                  .map((course) => (
+                    <div key={course.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+                      <div>
+                        <div className="h-32 w-full overflow-hidden bg-gray-100">
+                          <img 
+                            src={course.imageUrl || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&q=80'} 
+                            alt={course.title} 
+                            className="w-full h-full object-cover" 
+                          />
+                        </div>
+                        <div className="p-4">
+                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">{course.category || 'General'}</span>
+                            <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">Admin Approved</span>
+                          </div>
+                          <h3 className="font-bold text-gray-900 text-base mb-1 line-clamp-1">{course.title}</h3>
+                          <p className="text-xs text-gray-600 line-clamp-2 mb-2">{course.description}</p>
+                          <p className="text-xs text-gray-500">Faculty: <strong className="text-gray-700">{course.teacher || course.teacherName || 'Assigned Faculty'}</strong></p>
+                        </div>
+                      </div>
+
+                      <div className="p-4 pt-0">
+                        <button
+                          onClick={() => navigate(`/student/courses/${course.id}/teachers`)}
+                          className="w-full py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          Enroll in Course <ChevronRight size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
               </div>
             </div>
           )}

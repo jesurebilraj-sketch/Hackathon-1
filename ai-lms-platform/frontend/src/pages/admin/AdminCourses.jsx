@@ -92,6 +92,9 @@ const AdminCourses = () => {
       localStorage.setItem('courseTimetables', JSON.stringify(currentTimetables));
     }
 
+    // Notify all listeners and other views that approvedCourses has updated
+    window.dispatchEvent(new Event('approvedCoursesUpdated'));
+
     setSuccessMsg(`Course "${request.title}" and its default timetable have been approved! It is now live.`);
     loadData();
     setTimeout(() => setSuccessMsg(''), 3000);
@@ -140,6 +143,7 @@ const AdminCourses = () => {
     const currentApproved = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
     currentApproved.push(newCourse);
     localStorage.setItem('approvedCourses', JSON.stringify(currentApproved));
+    window.dispatchEvent(new Event('approvedCoursesUpdated'));
 
     setSuccessMsg(`Course "${title}" added directly to Available Courses!`);
     loadData();
