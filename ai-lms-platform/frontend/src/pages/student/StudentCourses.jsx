@@ -1,56 +1,115 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { BookOpen, PlayCircle, CheckCircle, Search, Compass } from 'lucide-react';
 
 const StudentCourses = () => {
-  // Demo toggle for presentation purposes
+  const navigate = useNavigate();
   const [isNewUser, setIsNewUser] = useState(true);
+  const [availableCourses, setAvailableCourses] = useState([]);
+  const [enrolledCourses, setEnrolledCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const myCourses = [
-    {
-      id: 1,
-      title: 'Python Programming Masterclass',
-      instructor: 'AI Generated',
-      progress: 78,
-      totalModules: 12,
-      completedModules: 9,
-      lastAccessed: '2 hours ago',
-      imageUrl: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=500&q=80'
-    },
-    {
-      id: 2,
-      title: 'Introduction to Data Structures',
-      instructor: 'AI Generated',
-      progress: 34,
-      totalModules: 8,
-      completedModules: 3,
-      lastAccessed: '1 day ago',
-      imageUrl: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=500&q=80'
-    },
-    {
-      id: 3,
-      title: 'Machine Learning Basics',
-      instructor: 'AI Generated',
-      progress: 0,
-      totalModules: 15,
-      completedModules: 0,
-      lastAccessed: 'Never',
-      imageUrl: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=500&q=80'
-    }
-  ];
+  // Fallback Mock Data
 
-  const recommendedCourses = [
+  const mockAvailableCourses = [
     { id: 101, title: 'Advanced React Patterns', category: 'Web Development', imageUrl: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=500&q=80' },
     { id: 102, title: 'Calculus I', category: 'Mathematics', imageUrl: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=500&q=80' },
     { id: 103, title: 'World History: 20th Century', category: 'History', imageUrl: 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?w=500&q=80' },
     { id: 104, title: 'Physics for Engineers', category: 'Science', imageUrl: 'https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?w=500&q=80' },
   ];
 
+  React.useEffect(() => {
+    const fetchData = async () => {
+      let apiEnrollments = [];
+      const studentId = parseInt(localStorage.getItem('studentId') || '1');
+      const userEmail = localStorage.getItem('userEmail') || 'default';
+      
+      try {
+        const { api } = await import('../../services/api');
+        
+        // Fetch all available courses from backend or fallback
+        let baseCourses = [];
+        const coursesData = await api.getAllCourses();
+        if (coursesData.courses && coursesData.courses.length > 0) {
+          baseCourses = coursesData.courses.map(c => ({
+            id: c.id,
+            title: c.title,
+            category: c.category || 'General',
+            imageUrl: c.imageUrl || 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=500&q=80'
+          }));
+        } else {
+          baseCourses = mockAvailableCourses;
+        }
+
+        // Merge courses approved by Administrator!
+        const adminApproved = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
+        const mergedAvailable = [...baseCourses];
+        for (const approved of adminApproved) {
+          if (!mergedAvailable.some(c => c.id === approved.id || c.title === approved.title)) {
+            mergedAvailable.push({
+              id: approved.id,
+              title: approved.title,
+              category: approved.category || 'General',
+              imageUrl: approved.imageUrl || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&q=80',
+              isApprovedByAdmin: true
+            });
+          }
+        }
+        setAvailableCourses(mergedAvailable);
+
+        // Fetch user enrollments dynamically
+        const enrollmentsData = await api.getStudentEnrollments(studentId);
+        if (enrollmentsData && enrollmentsData.enrollments) {
+          apiEnrollments = enrollmentsData.enrollments;
+        }
+      } catch (error) {
+        console.warn("Backend API unavailable, using mock data.", error);
+        const adminApproved = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
+        setAvailableCourses([...mockAvailableCourses, ...adminApproved]);
+      } finally {
+        const mockLocalEnrollments = JSON.parse(localStorage.getItem(`mockEnrollments_${userEmail}`) || '[]');
+        const combinedEnrollments = [...apiEnrollments, ...mockLocalEnrollments];
+
+        if (combinedEnrollments.length > 0) {
+          // Map backend/mock enrollments to frontend model
+          const mappedEnrollments = combinedEnrollments.map(enr => ({
+            id: enr.course ? enr.course.id : enr.id,
+            title: enr.course ? enr.course.title : enr.title,
+            instructor: enr.course ? enr.course.teacher : enr.instructor,
+            progress: 0,
+            totalModules: 10,
+            completedModules: 0,
+            lastAccessed: 'Just now',
+            imageUrl: (enr.course && enr.course.imageUrl) ? enr.course.imageUrl : 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=500&q=80'
+          }));
+          setEnrolledCourses(mappedEnrollments);
+          setIsNewUser(false);
+        } else {
+          setIsNewUser(true);
+        }
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Courses</h1>
-          <p className="text-gray-600 mt-1">Manage and track your enrolled courses.</p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-gray-900">My Courses</h1>
+            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+              enrolledCourses.length >= 5 
+                ? 'bg-red-100 text-red-700 border border-red-200' 
+                : 'bg-blue-50 text-blue-700 border border-blue-100'
+            }`}>
+              Capacity: {enrolledCourses.length} / 5 Max Courses
+            </span>
+          </div>
+          <p className="text-gray-600 mt-1">
+            Manage and track your enrolled courses. Institutional policy restricts students to 5 courses max.
+          </p>
         </div>
         
         {/* Demo Toggle - Just for hackathon presentation purposes */}
@@ -70,45 +129,25 @@ const StudentCourses = () => {
         </label>
       </div>
 
-      {isNewUser ? (
-        <div className="space-y-12">
-          {/* Empty State / Browse Prompt */}
-          <div className="bg-white p-12 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center justify-center text-center">
-            <div className="w-20 h-20 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-6">
-              <Compass size={40} />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">You haven't registered for any courses</h2>
-            <p className="text-gray-500 max-w-md mb-8">
-              Browse our catalog of AI-generated courses below to begin your learning journey.
-            </p>
+      {/* Empty State / Browse Prompt if no courses */}
+      {isNewUser && (
+        <div className="bg-white p-12 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center justify-center text-center">
+          <div className="w-20 h-20 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-6">
+            <Compass size={40} />
           </div>
-
-          {/* Recommended / Available Courses */}
-          <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Available Courses</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {recommendedCourses.map(course => (
-                <div key={course.id} className="group bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow flex flex-col">
-                  <div className="h-32 w-full overflow-hidden bg-gray-100">
-                    <img src={course.imageUrl} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                  </div>
-                  <div className="p-5 flex flex-col flex-1">
-                    <span className="text-xs font-semibold text-blue-600 tracking-wider uppercase mb-2">{course.category}</span>
-                    <h4 className="font-bold text-gray-900 mb-4 flex-1">{course.title}</h4>
-                    <button className="w-full py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:border-blue-300 transition-colors cursor-pointer">
-                      Register Course
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">You haven't registered for any courses</h2>
+          <p className="text-gray-500 max-w-md mb-8">
+            Browse our catalog of AI-generated courses below to begin your learning journey.
+          </p>
         </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Active Courses List */}
+      )}
+
+      {/* Active Courses (only show if enrolled) */}
+      {!isNewUser && enrolledCourses.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-xl font-bold text-gray-900 mb-4">Continue Learning</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {myCourses.map(course => (
+            {enrolledCourses.map(course => (
               <div key={course.id} className="group bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
                 <div className="h-32 w-full overflow-hidden bg-gray-100">
                   <img src={course.imageUrl} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -134,7 +173,7 @@ const StudentCourses = () => {
                   
                   <div className="mt-6 pt-6 border-t border-gray-100 flex items-center justify-between">
                     <span className="text-xs text-gray-400">Last active: {course.lastAccessed}</span>
-                    <button className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800">
+                    <button className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800 cursor-pointer">
                       {course.progress === 0 ? 'Start' : course.progress === 100 ? 'Review' : 'Continue'} 
                       <PlayCircle size={16} />
                     </button>
@@ -145,6 +184,58 @@ const StudentCourses = () => {
           </div>
         </div>
       )}
+
+      <div className="border-t border-gray-200 pt-8 mt-8"></div>
+
+      {/* Available Subjects */}
+      <div className="mb-12">
+        <h3 className="text-xl font-bold text-gray-900 mb-6">Available Subjects</h3>
+        <div className="flex flex-wrap gap-3">
+          {[
+            "Web Development", "Mathematics", "History", "Physics", "Computer Science", 
+            "Biology", "Chemistry", "Data Science", "Machine Learning", "Art History", 
+            "Literature", "Philosophy", "Economics", "Psychology", "Sociology", 
+            "Business", "Marketing", "Design", "Cybersecurity", "Networking", "Languages"
+          ].map((subject, idx) => (
+            <button 
+              key={idx}
+              onClick={() => navigate(`/student/courses/category/${encodeURIComponent(subject)}`)}
+              className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors cursor-pointer"
+            >
+              {subject}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Available Courses */}
+      <div>
+        <h3 className="text-xl font-bold text-gray-900 mb-6">Trending Courses</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {availableCourses.map(course => (
+            <div key={course.id} className="group bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow flex flex-col">
+              <div className="h-32 w-full overflow-hidden bg-gray-100">
+                <img src={course.imageUrl} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+              </div>
+              <div className="p-5 flex flex-col flex-1">
+                <span 
+                  onClick={() => navigate(`/student/courses/category/${encodeURIComponent(course.category)}`)}
+                  className="text-xs font-semibold text-blue-600 tracking-wider uppercase mb-2 cursor-pointer hover:underline"
+                >
+                  {course.category}
+                </span>
+                <h4 className="font-bold text-gray-900 mb-4 flex-1 cursor-pointer hover:text-blue-600 transition-colors">{course.title}</h4>
+                <button 
+                  onClick={() => navigate(`/student/courses/${course.id}/teachers`)}
+                  className="w-full py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:border-blue-300 transition-colors cursor-pointer"
+                >
+                  Register Course
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

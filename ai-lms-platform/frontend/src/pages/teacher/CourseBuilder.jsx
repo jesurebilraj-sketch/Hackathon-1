@@ -31,6 +31,34 @@ const CourseBuilder = () => {
     ]
   };
 
+  const handleSubmitForApproval = () => {
+    const teacherName = localStorage.getItem('userName') || 'Teacher';
+    const teacherEmail = localStorage.getItem('userEmail') || 'teacher@lms.edu';
+    
+    const newRequest = {
+      id: Date.now(),
+      title: mockCourse.title,
+      description: mockCourse.description,
+      category: 'Computer Science',
+      teacherName,
+      teacherEmail,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      modules: mockCourse.modules,
+      imageUrl: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=500&q=80'
+    };
+
+    const currentRequests = JSON.parse(localStorage.getItem('pendingCourseRequests') || '[]');
+    // Check duplicate
+    if (!currentRequests.some(r => r.title === newRequest.title && r.teacherEmail === teacherEmail)) {
+      currentRequests.push(newRequest);
+      localStorage.setItem('pendingCourseRequests', JSON.stringify(currentRequests));
+    }
+
+    alert('Course successfully submitted to the Administrator for curriculum approval and timetable scheduling!');
+    navigate('/teacher/dashboard');
+  };
+
   return (
     <div className="max-w-4xl mx-auto pb-12">
       <div className="flex justify-between items-end mb-8">
@@ -40,14 +68,17 @@ const CourseBuilder = () => {
           <p className="text-gray-600 mt-2">{mockCourse.description}</p>
         </div>
         <div className="flex gap-3">
-          <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50">
+          <button 
+            onClick={() => { alert('Draft saved locally.'); navigate('/teacher/dashboard'); }}
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 cursor-pointer"
+          >
             Save Draft
           </button>
           <button 
-            onClick={() => navigate('/teacher/dashboard')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 shadow-sm"
+            onClick={handleSubmitForApproval}
+            className="px-5 py-2 bg-blue-600 text-white rounded-md text-sm font-bold hover:bg-blue-700 shadow-sm cursor-pointer flex items-center gap-2"
           >
-            Publish Course
+            <CheckCircle size={16} /> Submit for Admin Approval
           </button>
         </div>
       </div>

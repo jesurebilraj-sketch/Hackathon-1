@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from database.database import get_db
-from database.models import Course, User, Module, Lesson
+from database.models import Course, User, Module, Lesson, Enrollment
 from pdf import process_pdf, PDFExtractionError
 from storage import register_uploaded_document, resolve_source_pdf, UPLOAD_DIR
 
@@ -62,8 +62,12 @@ def get_or_create_default_teacher(db: Session) -> User:
 
 
 @router.get("/", summary="List all courses")
-def list_courses(db: Session = Depends(get_db)):
-    courses = db.query(Course).all()
+def list_courses(category: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(Course)
+    if category:
+        query = query.filter(Course.category == category)
+    courses = query.all()
+    
     return {
         "count": len(courses),
         "courses": [
@@ -71,6 +75,8 @@ def list_courses(db: Session = Depends(get_db)):
                 "id": c.id,
                 "title": c.title,
                 "description": c.description,
+                "category": c.category,
+                "imageUrl": c.image_url,
                 "teacher_id": c.teacher_id,
                 "created_at": c.created_at.isoformat() if c.created_at else None,
             }
@@ -177,6 +183,94 @@ def get_course_details(course_id: int, db: Session = Depends(get_db)):
         "created_at": course.created_at.isoformat() if course.created_at else None,
         "modules": modules_data,
     }
+
+@router.get("/teacher/{teacher_id}", summary="Get all courses created by a specific teacher")
+def get_teacher_courses(teacher_id: int, db: Session = Depends(get_db)):
+    courses = db.query(Course).filter(Course.teacher_id == teacher_id).all()
+    return {
+        "count": len(courses),
+        "courses": [
+            {
+                "id": c.id,
+                "title": c.title,
+                "description": c.description,
+                "created_at": c.created_at.isoformat() if c.created_at else None,
+            }
+            for c in courses
+        ]
+    }
+
+@router.post("/student/{student_id}/enroll/{course_id}", summary="Enroll a student in a course")
+def enroll_student(student_id: int, course_id: int, teacher_id: Optional[int] = None, db: Session = Depends(get_db)):
+    # Check if student exists, if not, auto-create for the demo
+    student = db.query(User).filter(User.id == student_id, User.role == "student").first()
+    if not student:
+        student = User(id=student_id, name=f"Demo Student {student_id}", email=f"student_{student_id}@lms.com", role="student")
+        db.add(student)
+        db.commit()
+        db.refresh(student)
+        
+    # Check if course exists, if not, auto-create a mock course for the demo
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        # We need a teacher for the course. Use provided teacher_id or default to 1
+        t_id = teacher_id if teacher_id else 1
+        teacher = db.query(User).filter(User.id == t_id, User.role == "teacher").first()
+        if not teacher:
+            teacher = User(id=t_id, name=f"Demo Teacher {t_id}", email=f"teacher_{t_id}@lms.edu", role="teacher")
+            db.add(teacher)
+            db.commit()
+            db.refresh(teacher)
+
+        course = Course(
+            id=course_id,
+            title=f"Mock Course #{course_id}",
+            description="Auto-generated course for demo purposes.",
+            teacher_id=teacher.id,
+            category="Demo"
+        )
+        db.add(course)
+        db.commit()
+        db.refresh(course)
+        
+    # Check if already enrolled
+    existing = db.query(Enrollment).filter(
+        Enrollment.student_id == student_id,
+        Enrollment.course_id == course_id
+    ).first()
+    
+    if existing:
+        return {"message": "Already enrolled", "enrollment_id": existing.id}
+        
+    enrollment = Enrollment(student_id=student_id, course_id=course_id)
+    db.add(enrollment)
+    db.commit()
+    db.refresh(enrollment)
+    
+    return {"message": "Successfully enrolled", "enrollment_id": enrollment.id}
+
+@router.get("/student/{student_id}/enrollments", summary="Get all active courses for a student")
+def get_student_enrollments(student_id: int, db: Session = Depends(get_db)):
+    enrollments = db.query(Enrollment).filter(Enrollment.student_id == student_id).all()
+    
+    results = []
+    for enr in enrollments:
+        course = enr.course
+        results.append({
+            "enrollment_id": enr.id,
+            "enrolled_at": enr.enrolled_at.isoformat(),
+            "last_accessed": enr.last_accessed.isoformat(),
+            "course": {
+                "id": course.id,
+                "title": course.title,
+                "description": course.description,
+                "category": course.category,
+                "imageUrl": course.image_url,
+                "teacher": course.teacher.name if course.teacher else "Unknown",
+            }
+        })
+        
+    return {"count": len(results), "enrollments": results}
 
 
 @router.post(

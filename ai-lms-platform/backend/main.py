@@ -31,6 +31,7 @@ from database.models import (  # noqa: F401
     StudyPlan,
     StudySession,
 )
+from database.models import User, Course, Module, Lesson, Enrollment, StudentProgress, Message  # noqa: F401
 from api import (
     courses_router,
     course_generation_router,

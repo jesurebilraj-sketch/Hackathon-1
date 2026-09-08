@@ -8,26 +8,46 @@ const StudentDashboard = () => {
   const navigate = useNavigate();
   const userName = localStorage.getItem('userName') || 'Alex';
 
+  // State for real enrollments
+  const [enrollments, setEnrollments] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    const fetchEnrollments = async () => {
+      let apiEnrollments = [];
+      const studentId = parseInt(localStorage.getItem('studentId') || '1');
+      const userEmail = localStorage.getItem('userEmail') || 'default';
+      
+      try {
+        const { api } = await import('../../services/api');
+        const data = await api.getStudentEnrollments(studentId);
+        if (data && data.enrollments) {
+          apiEnrollments = data.enrollments;
+        }
+      } catch (error) {
+        console.warn("Failed to fetch API enrollments. Using local mock state.", error);
+      } finally {
+        const mockEnrollments = JSON.parse(localStorage.getItem(`mockEnrollments_${userEmail}`) || '[]');
+        const combined = [...apiEnrollments, ...mockEnrollments];
+
+        if (combined.length > 0) {
+          setEnrollments(combined);
+          setIsNewUser(false);
+        } else {
+          setIsNewUser(true);
+        }
+        setLoading(false);
+      }
+    };
+    fetchEnrollments();
+  }, []);
+
+  const currentCourse = enrollments.length > 0 ? enrollments[0].course : { title: 'Python Programming', category: 'General' };
+
+  if (loading) return null;
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
-      {/* Demo Toggle - Just for hackathon presentation purposes */}
-      <div className="flex justify-end mb-4">
-        <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm">
-          <span className="text-xs font-medium text-gray-500">Demo Mode:</span>
-          <div className="relative">
-            <input 
-              type="checkbox" 
-              className="sr-only" 
-              checked={!isNewUser}
-              onChange={() => setIsNewUser(!isNewUser)} 
-            />
-            <div className={`block w-10 h-6 rounded-full transition-colors ${!isNewUser ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
-            <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${!isNewUser ? 'transform translate-x-4' : ''}`}></div>
-          </div>
-          <span className="text-xs font-medium text-gray-700">{isNewUser ? 'New User' : 'Active User'}</span>
-        </label>
-      </div>
-
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Good Morning, {userName} 👋</h1>
         <p className="text-gray-600 mt-1">
@@ -61,16 +81,16 @@ const StudentDashboard = () => {
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <h2 className="text-lg font-bold text-gray-900">Current Course</h2>
-                  <p className="text-gray-500">Python Programming</p>
+                  <p className="text-gray-500">{currentCourse.title}</p>
                 </div>
                 <div className="text-right">
-                  <span className="text-2xl font-bold text-blue-600">78%</span>
+                  <span className="text-2xl font-bold text-blue-600">0%</span>
                   <p className="text-sm text-gray-500">Overall Progress</p>
                 </div>
               </div>
               
               <div className="w-full bg-gray-100 rounded-full h-2.5 mb-6">
-                <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: '78%' }}></div>
+                <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: '0%' }}></div>
               </div>
 
               <div className="p-4 bg-blue-50 rounded-lg flex items-center justify-between border border-blue-100">
