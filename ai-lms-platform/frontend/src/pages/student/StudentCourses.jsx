@@ -242,12 +242,22 @@ const StudentCourses = () => {
                     </span>
                   </div>
                   <h4 className="font-bold text-gray-900 mb-4 flex-1 cursor-pointer hover:text-blue-600 transition-colors">{course.title}</h4>
-                  <button 
-                    onClick={() => navigate(`/student/courses/${course.id}/teachers`)}
-                    className="w-full py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:border-blue-300 transition-colors cursor-pointer"
-                  >
-                    Register Course
-                  </button>
+                  {enrolledCourses.some(e => String(e.id) === String(course.id) || (e.title && course.title && e.title.trim().toLowerCase() === course.title.trim().toLowerCase())) ? (
+                    <button 
+                      disabled
+                      className="w-full py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-sm font-semibold text-emerald-700 flex items-center justify-center gap-1.5 cursor-default"
+                    >
+                      <CheckCircle size={16} className="text-emerald-600" />
+                      Course Enrolled
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => navigate(`/student/courses/${course.id}/teachers`)}
+                      className="w-full py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:border-blue-300 transition-colors cursor-pointer"
+                    >
+                      Register Course
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

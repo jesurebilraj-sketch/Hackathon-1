@@ -18,52 +18,109 @@ const TeacherDashboard = () => {
   const [actualStudentCount, setActualStudentCount] = useState(0);
 
   useEffect(() => {
-    // 1. Real Active Courses Handled by this teacher
-    const approved = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
-    const lastName = userName.split(' ').pop();
-    const myCourses = approved.filter(c => {
-      if (c.teacherEmail && c.teacherEmail.toLowerCase() === userEmail.toLowerCase()) return true;
-      if (c.instructor && (c.instructor === userName || c.instructor.includes(lastName))) return true;
-      if (c.teacher && (c.teacher === userName || c.teacher.includes(lastName))) return true;
-      return false;
-    });
-    setActiveCoursesCount(myCourses.length);
+    const loadDashboardData = () => {
+      // 1. Real Active Courses Handled by this teacher
+      const approved = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
+      const lastName = userName.split(' ').pop().toLowerCase();
+      const lowerUserName = userName.toLowerCase();
+      const lowerUserEmail = (userEmail || '').toLowerCase();
 
-    // 2. Timetable - strictly only for approved courses
-    const allTimetables = JSON.parse(localStorage.getItem('courseTimetables') || '[]');
-    const filtered = allTimetables.filter(slot => {
-      // Must be an approved course
-      const isApproved = approved.some(ac => ac.id === slot.courseId || ac.title?.toLowerCase() === slot.courseTitle?.toLowerCase());
-      if (!isApproved) return false;
+      const myCourses = approved.filter(c => {
+        if (c.teacherEmail && c.teacherEmail.toLowerCase() === lowerUserEmail) return true;
+        if (c.teacherId && String(c.teacherId) === String(teacherId)) return true;
+        if (c.instructor && (c.instructor.toLowerCase() === lowerUserName || c.instructor.toLowerCase().includes(lastName))) return true;
+        if (c.teacher && (c.teacher.toLowerCase() === lowerUserName || c.teacher.toLowerCase().includes(lastName))) return true;
+        if (c.teacherName && (c.teacherName.toLowerCase() === lowerUserName || c.teacherName.toLowerCase().includes(lastName))) return true;
+        return false;
+      });
+      setActiveCoursesCount(myCourses.length);
 
-      if (slot.instructor === userName) return true;
-      if (slot.teacherId && slot.teacherId.toString() === teacherId.toString()) return true;
-      return slot.instructor && slot.instructor.includes(lastName);
-    });
-    setMySlots(filtered);
+      // 2. Timetable - strictly only for approved courses
+      const allTimetables = JSON.parse(localStorage.getItem('courseTimetables') || '[]');
+      const filtered = allTimetables.filter(slot => {
+        // Must be an approved course
+        const isApproved = approved.some(ac => ac.id === slot.courseId || ac.title?.toLowerCase() === slot.courseTitle?.toLowerCase());
+        if (!isApproved) return false;
 
-    // 3. Load Rescheduled Classes
-    const allReschedules = JSON.parse(localStorage.getItem('rescheduledClasses') || '[]');
-    setRescheduledClasses(allReschedules);
+        if (slot.instructor && slot.instructor.toLowerCase() === lowerUserName) return true;
+        if (slot.teacherId && String(slot.teacherId) === String(teacherId)) return true;
+        return slot.instructor && slot.instructor.toLowerCase().includes(lastName);
+      });
+      setMySlots(filtered);
 
-    // 4. Real Student Count enrolled in this teacher's courses
-    let uniqueStudents = new Set();
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('mockEnrollments_')) {
-        const studentEmail = key.replace('mockEnrollments_', '');
-        try {
-          const enrs = JSON.parse(localStorage.getItem(key) || '[]');
-          for (const enr of enrs) {
-            const courseObj = enr.course || enr;
-            if (myCourses.some(mc => mc.id === courseObj.id || mc.title === courseObj.title)) {
-              uniqueStudents.add(studentEmail);
-            }
+      // 3. Load Rescheduled Classes
+      const allReschedules = JSON.parse(localStorage.getItem('rescheduledClasses') || '[]');
+      setRescheduledClasses(allReschedules);
+
+      // 4. Real Student Count enrolled in this teacher's courses
+      let uniqueStudents = new Set();
+
+      // Check direct teacher rosters
+      const teacherRosterKeys = [
+        `teacherStudents_${teacherId}`,
+        `teacherStudents_${userName.replace(/\s+/g, '_')}`
+      ];
+      teacherRosterKeys.forEach(tKey => {
+        const directList = JSON.parse(localStorage.getItem(tKey) || '[]');
+        for (const s of directList) {
+          if (s.email || s.id) {
+            uniqueStudents.add(s.email || String(s.id));
           }
-        } catch (e) {}
+        }
+      });
+
+      // Check all student enrollments in mockEnrollments_*
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('mockEnrollments_')) {
+          const studentEmail = key.replace('mockEnrollments_', '');
+          try {
+            const enrs = JSON.parse(localStorage.getItem(key) || '[]');
+            for (const enr of enrs) {
+              const courseObj = enr.course || enr;
+              
+              // Match if the enrollment belongs to this teacher or one of this teacher's courses
+              const isHandledCourse = myCourses.some(mc => 
+                String(mc.id) === String(courseObj.id) || 
+                (mc.title && courseObj.title && mc.title.trim().toLowerCase() === courseObj.title.trim().toLowerCase())
+              );
+              
+              const isTeacherDirectMatch = 
+                (courseObj.teacherId && String(courseObj.teacherId) === String(teacherId)) ||
+                (courseObj.teacherEmail && courseObj.teacherEmail.toLowerCase() === lowerUserEmail) ||
+                (courseObj.teacher && (courseObj.teacher.toLowerCase() === lowerUserName || courseObj.teacher.toLowerCase().includes(lastName))) ||
+                (courseObj.instructor && (courseObj.instructor.toLowerCase() === lowerUserName || courseObj.instructor.toLowerCase().includes(lastName)));
+
+              if (isHandledCourse || isTeacherDirectMatch) {
+                uniqueStudents.add(studentEmail);
+              }
+            }
+          } catch (e) {}
+        }
       }
-    }
-    setActualStudentCount(uniqueStudents.size);
+
+      // Also check teacherStats if greater than found set
+      const savedTeacherStats = JSON.parse(localStorage.getItem('teacherStats') || '{}');
+      const statsCount = Math.max(
+        savedTeacherStats[teacherId] || 0,
+        savedTeacherStats[userName] || 0
+      );
+
+      setActualStudentCount(Math.max(uniqueStudents.size, statsCount));
+    };
+
+    loadDashboardData();
+
+    const handleUpdate = () => loadDashboardData();
+    window.addEventListener('storage', handleUpdate);
+    window.addEventListener('enrollmentsUpdated', handleUpdate);
+    window.addEventListener('approvedCoursesUpdated', handleUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleUpdate);
+      window.removeEventListener('enrollmentsUpdated', handleUpdate);
+      window.removeEventListener('approvedCoursesUpdated', handleUpdate);
+    };
   }, [userName, userEmail, teacherId]);
 
   return (

@@ -32,38 +32,36 @@ const TeacherStudents = () => {
         const approvedCourses = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
         const teacherName = localStorage.getItem('userName') || 'Dr. Alan Turing';
         const teacherEmail = (localStorage.getItem('userEmail') || '').toLowerCase();
-        const lastName = teacherName.split(' ').pop();
+        const lastName = teacherName.split(' ').pop().toLowerCase();
+        const lowerTeacherName = teacherName.toLowerCase();
 
         const myApprovedCourses = approvedCourses.filter(c => {
           if (c.teacherEmail && c.teacherEmail.toLowerCase() === teacherEmail) return true;
-          if (c.instructor && (c.instructor === teacherName || c.instructor.includes(lastName))) return true;
-          if (c.teacher && (c.teacher === teacherName || c.teacher.includes(lastName))) return true;
+          if (c.teacherId && String(c.teacherId) === String(teacherId)) return true;
+          if (c.instructor && (c.instructor.toLowerCase() === lowerTeacherName || c.instructor.toLowerCase().includes(lastName))) return true;
+          if (c.teacher && (c.teacher.toLowerCase() === lowerTeacherName || c.teacher.toLowerCase().includes(lastName))) return true;
+          if (c.teacherName && (c.teacherName.toLowerCase() === lowerTeacherName || c.teacherName.toLowerCase().includes(lastName))) return true;
           return false;
         });
-
-        // If this teacher has no approved courses, they cannot have active student enrollments
-        if (myApprovedCourses.length === 0) {
-          setStudents([]);
-          setLoading(false);
-          return;
-        }
 
         // 2. Load stored student enrollments specifically for approved courses
         const validStudents = [];
         const seen = new Set();
 
-        // Check teacherStudents_${teacherId}
-        const directList = JSON.parse(localStorage.getItem(`teacherStudents_${teacherId}`) || '[]');
-        for (const s of directList) {
-          const isCourseApproved = myApprovedCourses.some(ac => 
-            String(ac.id) === String(s.courseId) || 
-            (ac.title && s.course && ac.title.trim().toLowerCase() === s.course.trim().toLowerCase())
-          );
-          if (isCourseApproved && !seen.has(`${s.email}_${s.course}`)) {
-            seen.add(`${s.email}_${s.course}`);
-            validStudents.push(s);
+        // Check teacherStudents keys by both ID and Name
+        const rosterKeys = [
+          `teacherStudents_${teacherId}`,
+          `teacherStudents_${teacherName.replace(/\s+/g, '_')}`
+        ];
+        rosterKeys.forEach(rKey => {
+          const directList = JSON.parse(localStorage.getItem(rKey) || '[]');
+          for (const s of directList) {
+            if (!seen.has(`${s.email || s.id}_${s.course}`)) {
+              seen.add(`${s.email || s.id}_${s.course}`);
+              validStudents.push(s);
+            }
           }
-        }
+        });
 
         // Scan mockEnrollments_ keys
         for (let i = 0; i < localStorage.length; i++) {
@@ -79,19 +77,26 @@ const TeacherStudents = () => {
                   (ac.title && cObj.title && ac.title.trim().toLowerCase() === cObj.title.trim().toLowerCase())
                 );
                 
-                if (matchingCourse) {
-                  const comboKey = `${email}_${matchingCourse.title}`;
+                const isTeacherDirectMatch = 
+                  (cObj.teacherId && String(cObj.teacherId) === String(teacherId)) ||
+                  (cObj.teacherEmail && cObj.teacherEmail.toLowerCase() === teacherEmail) ||
+                  (cObj.teacher && (cObj.teacher.toLowerCase() === lowerTeacherName || cObj.teacher.toLowerCase().includes(lastName))) ||
+                  (cObj.instructor && (cObj.instructor.toLowerCase() === lowerTeacherName || cObj.instructor.toLowerCase().includes(lastName)));
+
+                if (matchingCourse || isTeacherDirectMatch) {
+                  const courseTitle = matchingCourse ? matchingCourse.title : (cObj.title || 'Enrolled Course');
+                  const comboKey = `${email}_${courseTitle}`;
                   if (!seen.has(comboKey)) {
                     seen.add(comboKey);
                     validStudents.push({
                       id: email,
                       name: email.split('@')[0],
                       email: email,
-                      course: matchingCourse.title,
-                      courseId: matchingCourse.id,
+                      course: courseTitle,
+                      courseId: matchingCourse ? matchingCourse.id : cObj.id,
                       progress: enr.progress || 0,
                       lastActive: 'Just now',
-                      modules: matchingCourse.modules || []
+                      modules: (matchingCourse && matchingCourse.modules) || cObj.modules || []
                     });
                   }
                 }
@@ -120,6 +125,17 @@ const TeacherStudents = () => {
       }
     };
     fetchStudents();
+
+    const handleUpdate = () => fetchStudents();
+    window.addEventListener('storage', handleUpdate);
+    window.addEventListener('enrollmentsUpdated', handleUpdate);
+    window.addEventListener('approvedCoursesUpdated', handleUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleUpdate);
+      window.removeEventListener('enrollmentsUpdated', handleUpdate);
+      window.removeEventListener('approvedCoursesUpdated', handleUpdate);
+    };
   }, []);
 
   const uniqueCourses = ['All', ...new Set(students.map(s => s.course))];

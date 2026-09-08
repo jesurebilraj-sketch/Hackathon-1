@@ -15,53 +15,95 @@ const TeacherCourses = () => {
   const teacherId = localStorage.getItem('teacherId') || '1';
 
   useEffect(() => {
-    // 1. Load approved courses strictly from administrator-approved courses
-    const storedApproved = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
-    // 2. Load pending courses from this teacher
-    const storedPending = JSON.parse(localStorage.getItem('pendingCourseRequests') || '[]');
+    const loadTeacherCoursesData = () => {
+      // 1. Load approved courses strictly from administrator-approved courses
+      const storedApproved = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
+      // 2. Load pending courses from this teacher
+      const storedPending = JSON.parse(localStorage.getItem('pendingCourseRequests') || '[]');
 
-    // Filter approved courses strictly handled by this logged-in teacher
-    const lastName = userName.split(' ').pop();
-    const handledApproved = storedApproved.filter(c => {
-      if (c.teacherEmail && c.teacherEmail.toLowerCase() === userEmail.toLowerCase()) return true;
-      if (c.instructor && (c.instructor === userName || c.instructor.includes(lastName))) return true;
-      if (c.teacher && (c.teacher === userName || c.teacher.includes(lastName))) return true;
-      return false;
-    });
-    setApprovedCourses(handledApproved);
+      // Filter approved courses strictly handled by this logged-in teacher
+      const lastName = userName.split(' ').pop().toLowerCase();
+      const lowerUserName = userName.toLowerCase();
+      const lowerUserEmail = (userEmail || '').toLowerCase();
 
-    // Filter pending requests created by this teacher
-    const myPending = storedPending.filter(p => 
-      (p.teacherEmail && p.teacherEmail.toLowerCase() === userEmail.toLowerCase()) || 
-      p.teacherName === userName
-    ).map(p => ({
-      ...p,
-      status: 'Pending Admin Approval',
-      modulesCount: Array.isArray(p.modules) ? p.modules.length : (p.modules || 4)
-    }));
-    setPendingCourses(myPending);
+      const handledApproved = storedApproved.filter(c => {
+        if (c.teacherEmail && c.teacherEmail.toLowerCase() === lowerUserEmail) return true;
+        if (c.teacherId && String(c.teacherId) === String(teacherId)) return true;
+        if (c.instructor && (c.instructor.toLowerCase() === lowerUserName || c.instructor.toLowerCase().includes(lastName))) return true;
+        if (c.teacher && (c.teacher.toLowerCase() === lowerUserName || c.teacher.toLowerCase().includes(lastName))) return true;
+        if (c.teacherName && (c.teacherName.toLowerCase() === lowerUserName || c.teacherName.toLowerCase().includes(lastName))) return true;
+        return false;
+      });
+      setApprovedCourses(handledApproved);
 
-    // 3. Calculate student enrollments per course
-    const counts = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('mockEnrollments_')) {
-        try {
-          const enrs = JSON.parse(localStorage.getItem(key) || '[]');
-          for (const enr of enrs) {
-            const courseTitle = enr.course?.title;
-            if (courseTitle) {
-              counts[courseTitle] = (counts[courseTitle] || 0) + 1;
+      // Filter pending requests created by this teacher
+      const myPending = storedPending.filter(p => 
+        (p.teacherEmail && p.teacherEmail.toLowerCase() === lowerUserEmail) || 
+        (p.teacherName && p.teacherName.toLowerCase() === lowerUserName)
+      ).map(p => ({
+        ...p,
+        status: 'Pending Admin Approval',
+        modulesCount: Array.isArray(p.modules) ? p.modules.length : (p.modules || 4)
+      }));
+      setPendingCourses(myPending);
+
+      // 3. Calculate student enrollments per course
+      const counts = {};
+
+      // Check all mockEnrollments_*
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('mockEnrollments_')) {
+          try {
+            const enrs = JSON.parse(localStorage.getItem(key) || '[]');
+            for (const enr of enrs) {
+              const cObj = enr.course || enr;
+              const courseTitle = cObj?.title;
+              const courseId = cObj?.id;
+              if (courseTitle) {
+                counts[courseTitle] = (counts[courseTitle] || 0) + 1;
+              }
+              if (courseId) {
+                counts[courseId] = (counts[courseId] || 0) + 1;
+              }
             }
-          }
-        } catch (e) {}
+          } catch (e) {}
+        }
       }
-    }
-    setStudentCounts(counts);
 
-    // 4. Load Timetables
-    const allTimetables = JSON.parse(localStorage.getItem('courseTimetables') || '[]');
-    setCourseTimetables(allTimetables);
+      // Also incorporate teacher students list if any
+      const teacherRosterKeys = [
+        `teacherStudents_${teacherId}`,
+        `teacherStudents_${userName.replace(/\s+/g, '_')}`
+      ];
+      teacherRosterKeys.forEach(tKey => {
+        const directList = JSON.parse(localStorage.getItem(tKey) || '[]');
+        for (const s of directList) {
+          if (s.course) {
+            counts[s.course] = Math.max(counts[s.course] || 0, directList.filter(item => item.course === s.course).length);
+          }
+        }
+      });
+
+      setStudentCounts(counts);
+
+      // 4. Load Timetables
+      const allTimetables = JSON.parse(localStorage.getItem('courseTimetables') || '[]');
+      setCourseTimetables(allTimetables);
+    };
+
+    loadTeacherCoursesData();
+
+    const handleUpdate = () => loadTeacherCoursesData();
+    window.addEventListener('storage', handleUpdate);
+    window.addEventListener('enrollmentsUpdated', handleUpdate);
+    window.addEventListener('approvedCoursesUpdated', handleUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleUpdate);
+      window.removeEventListener('enrollmentsUpdated', handleUpdate);
+      window.removeEventListener('approvedCoursesUpdated', handleUpdate);
+    };
   }, [userName, userEmail, teacherId]);
 
   return (
@@ -148,9 +190,9 @@ const TeacherCourses = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {approvedCourses.map((course) => {
-                const enrolled = studentCounts[course.title] || 0;
+                const enrolled = studentCounts[course.title] || studentCounts[course.id] || 0;
                 const moduleCount = Array.isArray(course.modules) ? course.modules.length : (course.modules || 0);
-                const slots = courseTimetables.filter(t => t.courseTitle === course.title);
+                const slots = courseTimetables.filter(t => t.courseTitle === course.title || t.courseId === course.id);
 
                 return (
                   <div 

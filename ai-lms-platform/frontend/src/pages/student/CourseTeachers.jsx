@@ -89,13 +89,20 @@ const CourseTeachers = () => {
   const userEmail = localStorage.getItem('userEmail') || 'default';
   const studentLocalEnrollments = JSON.parse(localStorage.getItem(`mockEnrollments_${userEmail}`) || '[]');
   const currentEnrollmentCount = studentLocalEnrollments.length;
-  const isLimitReached = currentEnrollmentCount >= 5;
+  const isAlreadyEnrolled = studentLocalEnrollments.some(e => String(e.course?.id) === String(id) || String(e.id) === String(id));
+  const isLimitReached = currentEnrollmentCount >= 5 && !isAlreadyEnrolled;
 
   // Load Course Timetables strictly for this approved course
   const allTimetables = JSON.parse(localStorage.getItem('courseTimetables') || '[]');
   const courseTimetable = allTimetables.filter(t => t.courseId == id || t.courseTitle?.toLowerCase() === course?.title?.toLowerCase());
 
   const handleEnroll = async () => {
+    if (isAlreadyEnrolled) {
+      alert('You are already enrolled in this course.');
+      navigate('/student/courses');
+      return;
+    }
+
     // 5-Course Limit Enforcement
     if (isLimitReached) {
       alert('Enrollment Limit Reached: Institutional academic policy restricts students to a maximum of 5 concurrent courses. You cannot enroll in additional courses.');
@@ -104,8 +111,12 @@ const CourseTeachers = () => {
 
     // Common enrollment persistence function to ensure student courses & teacher students sync seamlessly
     const persistEnrollment = () => {
-      // Increment teacher student count
-      const newStats = { ...teacherStats, [selectedTeacher.id]: (teacherStats[selectedTeacher.id] || 0) + 1 };
+      // Increment teacher student count for this teacher
+      const newStats = { 
+        ...teacherStats, 
+        [selectedTeacher.id]: (teacherStats[selectedTeacher.id] || 0) + 1,
+        [selectedTeacher.name]: ((teacherStats[selectedTeacher.name] || 0) + 1)
+      };
       setTeacherStats(newStats);
       localStorage.setItem('teacherStats', JSON.stringify(newStats));
 
@@ -131,6 +142,10 @@ const CourseTeachers = () => {
             title: resolvedTitle,
             category: resolvedCategory,
             teacher: selectedTeacher.name,
+            teacherName: selectedTeacher.name,
+            teacherId: selectedTeacher.id,
+            teacherEmail: selectedTeacher.email,
+            instructor: selectedTeacher.name,
             modules: matchedCourse.modules || [],
             imageUrl: matchedCourse.imageUrl || 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=500&q=80'
           }
@@ -138,26 +153,48 @@ const CourseTeachers = () => {
         localStorage.setItem(`mockEnrollments_${userEmail}`, JSON.stringify(mockEnrollments));
       }
 
-      // 2. Global teacher students list for the Teacher Portal demo
+      // 2. Global teacher students list for the Teacher Portal demo (both by ID and email/name)
       const userName = localStorage.getItem('userName') || 'Demo Student';
-      const teacherStudentsKey = `teacherStudents_${selectedTeacher.id}`;
-      const mockTeacherStudents = JSON.parse(localStorage.getItem(teacherStudentsKey) || '[]');
-      if (!mockTeacherStudents.find(s => s.id === studentId && s.course === resolvedTitle)) {
-        mockTeacherStudents.push({
-          id: studentId,
-          name: userName,
-          email: userEmail,
-          course: resolvedTitle,
-          progress: 0,
-          lastActive: 'Just now',
-          modules: matchedCourse.modules || []
-        });
-        localStorage.setItem(teacherStudentsKey, JSON.stringify(mockTeacherStudents));
-      }
+      const teacherKeys = [
+        `teacherStudents_${selectedTeacher.id}`,
+        `teacherStudents_${selectedTeacher.name.replace(/\s+/g, '_')}`
+      ];
+      teacherKeys.forEach(tKey => {
+        const mockTeacherStudents = JSON.parse(localStorage.getItem(tKey) || '[]');
+        if (!mockTeacherStudents.find(s => (s.id === studentId || s.email === userEmail) && s.course === resolvedTitle)) {
+          mockTeacherStudents.push({
+            id: studentId,
+            name: userName,
+            email: userEmail,
+            course: resolvedTitle,
+            courseId: id,
+            progress: 0,
+            lastActive: 'Just now',
+            modules: matchedCourse.modules || []
+          });
+          localStorage.setItem(tKey, JSON.stringify(mockTeacherStudents));
+        }
+      });
 
-      // Notify other views and components that enrollments have updated
+      // Also ensure the approved course object in approvedCourses stores the assigned teacher if not already set
+      const updatedApprovedCourses = approvedCourses.map(c => {
+        if (String(c.id) === String(id)) {
+          return {
+            ...c,
+            teacher: c.teacher || selectedTeacher.name,
+            teacherName: c.teacherName || selectedTeacher.name,
+            teacherId: c.teacherId || selectedTeacher.id,
+            teacherEmail: c.teacherEmail || selectedTeacher.email
+          };
+        }
+        return c;
+      });
+      localStorage.setItem('approvedCourses', JSON.stringify(updatedApprovedCourses));
+
+      // Notify other views and components that enrollments and approved courses have updated
       window.dispatchEvent(new Event('storage'));
       window.dispatchEvent(new Event('enrollmentsUpdated'));
+      window.dispatchEvent(new Event('approvedCoursesUpdated'));
     };
 
     try {
@@ -245,19 +282,31 @@ const CourseTeachers = () => {
                 <div className="flex flex-col items-end gap-2">
                   <button 
                     onClick={handleEnroll}
-                    disabled={enrolling || isLimitReached}
-                    className={`px-6 py-3 font-bold rounded-xl transition-colors shadow-sm cursor-pointer ${
-                      isLimitReached
-                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    disabled={enrolling || isLimitReached || isAlreadyEnrolled}
+                    className={`px-6 py-3 font-bold rounded-xl transition-colors shadow-sm cursor-pointer flex items-center gap-2 ${
+                      isAlreadyEnrolled
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 cursor-default'
+                        : isLimitReached
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
                     }`}
                   >
-                    {isLimitReached 
+                    {isAlreadyEnrolled ? (
+                      <>
+                        <CheckCircle size={18} className="text-emerald-600" />
+                        Course Enrolled
+                      </>
+                    ) : isLimitReached 
                       ? 'Course Limit Reached (5/5)' 
                       : enrolling 
                         ? 'Enrolling...' 
                         : 'Confirm Enrollment'}
                   </button>
+                  {isAlreadyEnrolled && (
+                    <span className="text-xs font-semibold text-emerald-700">
+                      You are actively studying this course
+                    </span>
+                  )}
                   {isLimitReached && (
                     <span className="text-xs font-semibold text-red-600">
                       Maximum 5 courses allowed per student

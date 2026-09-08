@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, BookOpen } from 'lucide-react';
+import { ArrowLeft, BookOpen, CheckCircle } from 'lucide-react';
 
 const CategoryCourses = () => {
   const { category } = useParams();
@@ -8,11 +8,22 @@ const CategoryCourses = () => {
   const decodedCategory = decodeURIComponent(category);
 
   const [courses, setCourses] = React.useState([]);
+  const [enrolledIds, setEnrolledIds] = React.useState(new Set());
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
     const fetchCategoryCourses = async () => {
       try {
+        const userEmail = localStorage.getItem('userEmail') || 'default';
+        const studentLocalEnrollments = JSON.parse(localStorage.getItem(`mockEnrollments_${userEmail}`) || '[]');
+        const registeredSet = new Set(
+          studentLocalEnrollments.map(e => String(e.course?.id || e.id))
+        );
+        const registeredTitleSet = new Set(
+          studentLocalEnrollments.map(e => (e.course?.title || e.title || '').trim().toLowerCase())
+        );
+        setEnrolledIds({ ids: registeredSet, titles: registeredTitleSet });
+
         // Load administrator-approved courses strictly
         const adminApproved = JSON.parse(localStorage.getItem('approvedCourses') || '[]');
         const matchingApproved = adminApproved.filter(c => 
@@ -73,12 +84,22 @@ const CategoryCourses = () => {
                   <BookOpen size={14} />
                   {course.modules} Modules
                 </p>
-                <button 
-                  onClick={() => navigate(`/student/courses/${course.id}/teachers`)}
-                  className="w-full py-2 bg-blue-50 border border-transparent rounded-lg text-sm font-medium text-blue-700 hover:bg-blue-600 hover:text-white transition-colors cursor-pointer"
-                >
-                  Register Course
-                </button>
+                {enrolledIds?.ids?.has(String(course.id)) || enrolledIds?.titles?.has(course.title?.trim().toLowerCase()) ? (
+                  <button 
+                    disabled
+                    className="w-full py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-sm font-semibold text-emerald-700 flex items-center justify-center gap-1.5 cursor-default"
+                  >
+                    <CheckCircle size={16} className="text-emerald-600" />
+                    Course Enrolled
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => navigate(`/student/courses/${course.id}/teachers`)}
+                    className="w-full py-2 bg-blue-50 border border-transparent rounded-lg text-sm font-medium text-blue-700 hover:bg-blue-600 hover:text-white transition-colors cursor-pointer"
+                  >
+                    Register Course
+                  </button>
+                )}
               </div>
             </div>
           ))}

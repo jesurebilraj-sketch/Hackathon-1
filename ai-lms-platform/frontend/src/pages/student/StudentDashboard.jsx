@@ -263,12 +263,21 @@ const StudentDashboard = () => {
                       </div>
 
                       <div className="p-5 pt-0">
-                        <button
-                          onClick={() => navigate(`/student/courses/${course.id}/teachers`)}
-                          className="w-full py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
-                        >
-                          Enroll Now <ChevronRight size={16} />
-                        </button>
+                        {enrolledApprovedCourses.some(e => String(e.id) === String(course.id) || (e.title && course.title && e.title.trim().toLowerCase() === course.title.trim().toLowerCase())) ? (
+                          <button
+                            disabled
+                            className="w-full py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 cursor-default"
+                          >
+                            <CheckCircle size={16} className="text-emerald-600" /> Course Enrolled
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => navigate(`/student/courses/${course.id}/teachers`)}
+                            className="w-full py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            Enroll Now <ChevronRight size={16} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
